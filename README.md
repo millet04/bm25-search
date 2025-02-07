@@ -1,5 +1,5 @@
-# BM25-Search: BM25s written in C++ and Wrapped for Python
-BM25 based algorithms, written in C++ and wrapped for Python.        
+# BM25-Search
+BM25 based algorithms written in C++ and wrapped for Python.        
 &nbsp;
 
 ## 1. Installation
