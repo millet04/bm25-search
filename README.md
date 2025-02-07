@@ -1,5 +1,6 @@
 # BM25-Search
 BM25 based algorithms, written in C++ and wrapped for Python.        
+&nbsp;
 
 ## 1. Installation
 ```
@@ -8,7 +9,7 @@ pip install bm25-search
 - __OS__: Window, Linux (MacOs is not supported yet.)
 - __Python__: Python 3.6 to 3.13
 
-
+ 
 ## 2. Usage
 
 ### 1️⃣ Set Model 
@@ -87,13 +88,18 @@ corpus_new = bm25.load_corpus("corpus.pkl")
 ```
 
 ## 3. Available Algorithms
-
-
+The following algorithms are provided, with the same usage, but different parameters for `set_model()` method.         
+Please note that `BM25T` is still a beta version, so it might not work properly. 
 
 🔹`BM25`    
 🔹`BM11`    
 🔹`BM15`    
 🔹`BM25L`    
-🔹`BM25Plus`    
-🔹`BM25T` (beta)    
-🔹`TF-IDF`    
+🔹`BM25Plus`     
+🔹`TFIDF`       
+🔹`(beta) BM25T`           
+
+&nbsp;
+
+## Citing
+
