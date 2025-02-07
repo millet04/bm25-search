@@ -1,5 +1,15 @@
 # BM25-Search
-BM25 based algorithms written in C++ and wrapped for Python.        
+A collection of BM25 based algorithms, including BM25 itself, written in C++ and wrapped for Python.  
+The following algorithms are provided in `version 0.1.0`.
+
+🔹`BM25`    
+🔹`BM11`    
+🔹`BM15`    
+🔹`BM25L`    
+🔹`BM25Plus`     
+🔹`TFIDF`       
+🔹`(beta) BM25T`       
+
 &nbsp;
 
 ## 1. Installation
@@ -87,7 +97,7 @@ bm25.save_corpus("corpus.pkl", corpus)
 corpus_new = bm25.load_corpus("corpus.pkl")
 ```
 
-## 3. Available Algorithms
+## 3. Other Algorhithms
 The following algorithms are provided, with the same usage, but different parameters for `set_model()` method.         
 Please note that `BM25T` is still a beta version, so it might not work properly. 
 
