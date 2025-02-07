@@ -1,4 +1,4 @@
-# BM25-Search
+# BM25-Search: BM25s written in C++ and Wrapped for Python
 BM25 based algorithms, written in C++ and wrapped for Python.        
 &nbsp;
 
@@ -102,4 +102,23 @@ Please note that `BM25T` is still a beta version, so it might not work properly.
 &nbsp;
 
 ## Citing
+This code is based on the repository [dorianbrown/rank_bm25](https://github.com/dorianbrown/rank_bm25), which has been referenced for the development of this tool.
+```
+@misc{doraianbrown2022rank_bm25,
+      title={Rank-BM25: A two line search engine},
+      author={Dorian Brown},
+      year={2022},
+      url={https://github.com/dorianbrown/rank_bm25},
+}
+```
+
+If you use this **BM25-Search** in your research or projects, please cite it as follows:
+```
+@misc{millet042025bm25-search,
+      title={BM25-Search},
+      author={Kim Minseok},
+      year={2025},
+      url={https://github.com/millet04/bm25_search},
+}
+```
 
