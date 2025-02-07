@@ -82,7 +82,7 @@ bm25.get_topk_docs(queries_tokenized, corpus, n=2)
 ```
 
 ### 5️⃣ Save & Load
-You can save the model to a pickle file using the `save_model()` method. All statistics required to build the model are saved. 
+You can save the model to a pickle file using the `save_model()` method. All statistics required to build the model are saved.
 ```python
 bm25.save_model("mybm25.pkl")
 ```
@@ -98,16 +98,15 @@ corpus_new = bm25.load_corpus("corpus.pkl")
 ```
 
 ## 3. Other Algorhithms
-The following algorithms are provided, with the same usage, but different parameters for `set_model()` method.         
-Please note that `BM25T` is still a beta version, so it might not work properly. 
+The following algorithms are provided, with the same usage, but different parameters for `set_model()` method. You can use them by creating an instance like `bm25plus = BM25Plus()` and following the guidance below regarding the parameters of the `set_model()` method. Please note that `BM25T` is still a beta version, so it might not work properly. 
 
-🔹`BM25`    
-🔹`BM11`    
-🔹`BM15`    
-🔹`BM25L`    
-🔹`BM25Plus`     
-🔹`TFIDF`       
-🔹`(beta) BM25T`           
+🔹`BM25` ➡️ ```bm25.set_model(corpus, k=1.5, b=0.75)```  
+🔹`BM11` ➡️ ```bm11.set_model(corpus, k=1.5)```         
+🔹`BM15` ➡️ ```bm15.set_model(corpus, k=1.5)```         
+🔹`BM25L` ➡️ ```bm25l.set_model(corpus, k=1.5, b=0.75, delta = 1.0)```           
+🔹`BM25Plus` ➡️ ```bm25plus.set_model(corpus, k=1.5, b=0.75, delta = 1.0)```     
+🔹`TFIDF` ➡️ ```tf_idf.set_model(corpus)```      
+🔹`(beta) BM25T` ➡️ ```bm25t.set_model(corpus, k=1.5, b=0.75, eps=0.1, max_iter=100)```            
 
 &nbsp;
 
