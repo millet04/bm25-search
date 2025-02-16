@@ -13,6 +13,7 @@
 using namespace std;
 namespace py = pybind11;
 
+
 /**
  * TFIDF::set_idf : A function that calculates and sets the TF-IDF's IDF values for all words.
  *                  This improves the efficiency of searching for a given query.
@@ -22,7 +23,7 @@ namespace py = pybind11;
 void TFIDF::set_idf(void) {
     // Efficiently calculate IDF using logarithmic operations.
     for (const auto& word : df) {
-        double idf_score = log(*doc_n) - log(1 + word.second);
+        double idf_score = log(doc_n) - log(1 + word.second);
         idf[word.first] = idf_score;
     }
 }
@@ -38,15 +39,15 @@ void TFIDF::set_tf(void) {
     for (const auto& word : df) {
 
         // Calculate 'freq(q, doc)', a frequency of a word in each document.  
-        vector<double> tf_vector(*doc_n, 0.0);
-        for (size_t i = 0; i < *doc_n; i++) {
+        vector<double> tf_vector(doc_n, 0.0);
+        for (unsigned int i = 0; i < doc_n; i++) {
             if (freq[i].find(word.first) != freq[i].end()) {
                 tf_vector[i]++;
             }
         }
 
         // Calculates the BM25 TF values for all words. 
-        for (size_t i = 0; i < *doc_n; i++) {
+        for (unsigned int i = 0; i < doc_n; i++) {
             tf_vector[i] = tf_vector[i] / dl[i];
         }
         tf[word.first] = tf_vector;
@@ -90,7 +91,7 @@ void TFIDF::save_model(const string& filepath) {
     // Save necessary data.
     py::dict data;
     data["dl"] = dl;
-    data["doc_n"] = *doc_n;
+    data["doc_n"] = doc_n;
     data["freq"] = freq;
     data["df"] = df;
     data["tf"] = tf;
@@ -120,9 +121,9 @@ void TFIDF::load_model(const string& filepath) {
     py::dict data = pickle.attr("load")(py_file);
     py_file.attr("close")();
 
-    this->dl = data["dl"].cast<vector<size_t>>();
-    *this->doc_n = data["doc_n"].cast<size_t>();
-    this->freq = data["freq"].cast<vector<unordered_map<string, size_t>>>();
+    this->dl = data["dl"].cast<vector<int>>();
+    this->doc_n = data["doc_n"].cast<unsigned int>();
+    this->freq = data["freq"].cast<vector<unordered_map<string, int>>>();
     this->df = data["df"].cast<unordered_map<string, double>>();
     this->tf = data["tf"].cast<unordered_map<string, vector<double>>>();
     this->idf = data["idf"].cast<unordered_map<string, double>>();

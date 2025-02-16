@@ -94,7 +94,7 @@ PYBIND11_MODULE(bm25_search, m) {
         .def(py::init<>())
         .def("set_tf", &BM25T::set_tf, "Set term frequency values", py::arg("k"), py::arg("b"), py::arg("eps"), py::arg("max_iter"))
         .def("compute_optimal_k", &BM25T::compute_optimal_k, "Compute the optimal k", py::arg("word"), py::arg("k"), py::arg("sum_log_c"), py::arg("eps"), py::arg("max_iter"))
-        .def("set_model", &BM25T::set_model, "Set a BM25T model", py::arg("corpus"), py::arg("k") = 1.5, py::arg("b") = 0.75, py::arg("eps") = 0.05, py::arg("max_iter") = 100)
+        .def("set_model", &BM25T::set_model, "Set a BM25T model", py::arg("corpus"), py::arg("k") = 1.5, py::arg("b") = 0.75, py::arg("eps") = 0.1, py::arg("max_iter") = 100)
         .def("save_model", &BM25T::save_model, "Save a BM25T model", py::arg("filepath"))
         .def("load_model", &BM25T::load_model, "Load a BM25T model", py::arg("filepath"))
         .def_readwrite("k", &BM25T::k)

@@ -23,7 +23,7 @@ namespace py = pybind11;
  *
  * Parameters
  * ----------
- *    - k (double) : Saturation parameter. (default = 1.5)
+ *    - k (double) : Saturation parameter. (default = 2.0)
  *                   Controls the influence of term frequency (TF) on the final score,
  *                   determining how quickly the score saturates as term frequency increases.
  *
@@ -32,15 +32,15 @@ void BM15::set_tf(double k) {
     for (const auto& word : df) {
 
         // Calculate 'freq(q, doc)', a frequency of a word in each document.  
-        vector<double> tf_vector(*doc_n, 0.0);
-        for (size_t i = 0; i < *doc_n; i++) {
+        vector<double> tf_vector(doc_n, 0.0);
+        for (unsigned int i = 0; i < doc_n; i++) {
             if (freq[i].find(word.first) != freq[i].end()) {
                 tf_vector[i]++;
             }
         }
 
         // Calculates the BM15 TF values for all words. 
-        for (size_t i = 0; i < *doc_n; i++) {
+        for (unsigned int i = 0; i < doc_n; i++) {
             tf_vector[i] = tf_vector[i] * (k + 1) / (tf_vector[i] + k);
         }
         tf[word.first] = tf_vector;
@@ -91,7 +91,7 @@ void BM15::save_model(const string& filepath) {
     data["k"] = k;
     data["dl"] = dl;
     data["avgdl"] = avgdl;
-    data["doc_n"] = *doc_n;
+    data["doc_n"] = doc_n;
     data["freq"] = freq;
     data["df"] = df;
     data["tf"] = tf;
@@ -122,10 +122,10 @@ void BM15::load_model(const string& filepath) {
     py_file.attr("close")();
 
     this->k = data["k"].cast<double>();
-    this->dl = data["dl"].cast<vector<size_t>>();
+    this->dl = data["dl"].cast<vector<int>>();
     this->avgdl = data["avgdl"].cast<double>();
-    *this->doc_n = data["doc_n"].cast<size_t>();
-    this->freq = data["freq"].cast<vector<unordered_map<string, size_t>>>();
+    this->doc_n = data["doc_n"].cast<unsigned int>();
+    this->freq = data["freq"].cast<vector<unordered_map<string, int>>>();
     this->df = data["df"].cast<unordered_map<string, double>>();
     this->tf = data["tf"].cast<unordered_map<string, vector<double>>>();
     this->idf = data["idf"].cast<unordered_map<string, double>>();
