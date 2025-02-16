@@ -141,7 +141,7 @@ Unlike raw Term Frequency, BM25 applies a saturation function, preventing a term
 
 where,       
 - *f(t,D)* is the Term Frequency of term *t* in document *D*.
-- *|D|* is the length of the document *D* (number of words).
+- \*|D|* is the length of the document *D* (number of words).
 - *avgD* is the average document length in the corpus.
 - *k1* and b are hyperparameters that control term frequency saturation and document length normalization.
 
@@ -197,7 +197,7 @@ $$TF(D, t) = \frac{f(t, D)}{|D|}$$
 
 where,       
 - *f(t,D)* is the Term Frequency of term *t* in document *D*.
-- *|D|* is the length of the document *D* (number of words).
+- \*|D|* is the length of the document *D* (number of words).
 
 ### Inverse Document Frequency (IDF)
 
@@ -244,7 +244,7 @@ $$\text{TF}(D, t) = \frac{ f(t, D) \cdot (k_1 + 1)}{ f(t, D) + k_1}$$
 
 where,       
 - *f(t,D)* is the Term Frequency of term *t* in document *D*.
-- *|D|* is the length of the document *D* (number of words).
+- \*|D|* is the length of the document *D* (number of words).
 - *avgD* is the average document length in the corpus.
 - *k1* is a hyperparameter that control term frequency saturation.
 
@@ -285,7 +285,7 @@ $$TF(D, t) = \frac{ f(t, D) \cdot (k_1 + 1)}{ f(t, D) + k_1 \cdot \frac{|D|}{\te
 
 where,       
 - *f(t,D)* is the Term Frequency of term *t* in document *D*.
-- *|D|* is the length of the document *D* (number of words).
+- \*|D|* is the length of the document *D* (number of words).
 - *avgD* is the average document length in the corpus.
 - *k1* is a hyperparameter that control term frequency saturation.
 
@@ -335,7 +335,7 @@ $$c = \frac{f(t, D) }{1 - b + b \cdot \frac{|D|}{\text{avgD}}}$$
 where,       
 
 - *f(t,D)* is the Term Frequency of term *t* in document *D*.
-- *|D|* is the length of the document *D* (number of words).
+- \*|D|* is the length of the document *D* (number of words).
 - *avgD* is the average document length in the corpus.
 - *k1* is a hyperparameter that control term frequency saturation.
 - *δ* is a positive constant to prevent excessive penalization of long documents.
