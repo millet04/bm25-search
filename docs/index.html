@@ -1,0 +1,347 @@
+<head>
+      <meta charset="UTF-8">
+      <meta name="keywords" content="bm25, bm11, bm15, tf-idf, bm25+, bm25l, bm25t">
+      <meta name="robots" content="index, follow">
+      <meta property="og:title" content="BM25-Search">
+      <meta property="og:description" content="A Document of BM25-Search">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+<head>
+<head>
+      <script type="text/javascript" async
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML">
+      </script>
+    </head>
+<html><head><style> body {
+    color: black;
+ }
+ </style></head><body><p> <a href="#Overview">Overview</a><br><a href="#installation-version-011">Installation</a><br><a href="#quick-start">Quick Start</a><br><a href="#algorithms">Algorithms</a><br><a href="#citing">Citing</a><br><a href="#release-history">Release History</a>         </p>
+<hr>
+<h1 id="overview">Overview</h1>
+<p>A collection of BM25-based algorithms, including BM25 itself, written in C++ and wrapped for Python. The following algorithms are provided in <code>version 0.1.0</code>.</p>
+<ul>
+<li><a href="#1️-bm25-class-bm25">BM25</a>      </li>
+<li><a href="#2️-tf-idf-class-tfidf">TF-IDF</a>      </li>
+<li><a href="#3️-bm11-class-bm11">BM11</a>        </li>
+<li><a href="#4️-bm15-class-bm15">BM15</a>             </li>
+<li><a href="#5️-bm25l-class-bm25l">BM25L</a>       </li>
+<li><a href="#6️-bm25-class-bm25plus">BM25+</a>           </li>
+<li><a href="#7️-bm25t-class-bm25t-beta">BM25T</a> <em>(beta)</em>      </li>
+</ul>
+<p>&nbsp;</p>
+<hr>
+<h1 id="installation-version-0-1-1-">Installation (version 0.1.1)</h1>
+<pre><code>pip <span class="hljs-keyword">install</span> bm25-<span class="hljs-keyword">search</span>
+</code></pre><ul>
+<li><strong>OS</strong>: Window, Linux (MacOs is not supported yet.)</li>
+<li><strong>Python</strong>: Python 3.6 to 3.13</li>
+</ul>
+<p>&nbsp;</p>
+<hr>
+<h1 id="quick-start">Quick Start</h1>
+<h3 id="1-set-model">1️⃣ Set Model</h3>
+<p>Calculate the TF (Term Frequency) and IDF (Inverse Document Frequency) for all tokens in the given documents using the <code>set_model()</code> method. This pre-calculation helps reduce latency during the search stage.</p>
+<pre><code class="lang-python">from bm25_search <span class="hljs-built_in">import</span> BM25
+
+<span class="hljs-attr">corpus</span> = [
+    <span class="hljs-string">"The sun is shining brightly"</span>,
+    <span class="hljs-string">"It is raining now"</span>,
+    <span class="hljs-string">"The breeze feels cool"</span>,
+    <span class="hljs-string">"Snow is expected tonight"</span>,
+    <span class="hljs-string">"The sky is cloudy"</span>    
+]
+
+<span class="hljs-comment"># Tokenized 2-dimensional list </span>
+<span class="hljs-attr">corpus_tokenized</span> = [doc.lower().split(<span class="hljs-string">" "</span>) for doc <span class="hljs-keyword">in</span> corpus]
+
+<span class="hljs-attr">bm25</span> = BM25()
+
+<span class="hljs-comment"># TF and IDF calculations are done at this stage, </span>
+<span class="hljs-comment"># so this might take a while if the corpus is large. </span>
+bm25.set_model(corpus_tokenized, <span class="hljs-attr">k=1.5,</span> <span class="hljs-attr">b=0.75)</span>
+</code></pre>
+<h3 id="2-get-scores">2️⃣ Get Scores</h3>
+<p>You can obtain the scores of all documents for the given queries using the <code>get_scores()</code> method.</p>
+<pre><code class="lang-python"># Tokenized 2-dimensional <span class="hljs-keyword">list</span>
+queries = [<span class="hljs-string">"white snow"</span>, <span class="hljs-string">"cloudy sky"</span>]
+queries_tokenized = [<span class="hljs-keyword">query</span>.<span class="hljs-built_in">lower</span>().<span class="hljs-keyword">split</span>(<span class="hljs-string">" "</span>) <span class="hljs-keyword">for</span> <span class="hljs-keyword">query</span> <span class="hljs-keyword">in</span> queries]
+
+bm25.get_scores(queries_tokenized)
+</code></pre>
+<pre><code>[[<span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">1.4166511719473336</span>, <span class="hljs-number">0.0</span>],
+ [<span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">2.833302343894667</span>]]
+</code></pre><h3 id="3-get-top-k-scores-indices">3️⃣ Get Top-K Scores &amp; Indices</h3>
+<p>You can obtain the scores and indices of top-k documents for the given queries using the <code>get_topk()</code> method.</p>
+<pre><code class="lang-python">b<span class="hljs-name">m25.</span>get_topk<span class="hljs-comment">(queries_tokenized, n=2)</span>
+</code></pre>
+<h3 id="5-save-load">5️⃣ Save &amp; Load</h3>
+<p>You can save the model to a pickle file using the <code>save_model()</code> method. All statistics required to build the model are saved.</p>
+<pre><code class="lang-python"><span class="hljs-selector-tag">bm25</span><span class="hljs-selector-class">.save_model</span>("<span class="hljs-selector-tag">mybm25</span><span class="hljs-selector-class">.pkl</span>")
+</code></pre>
+<p>You can load the saved model using the <code>load_model()</code> method.</p>
+<pre><code class="lang-python">bm25_new <span class="hljs-type"></span>= BM25()
+bm25_new<span class="hljs-type"></span>.load_model(<span class="hljs-string">"mybm25.pkl"</span>)
+</code></pre>
+<p>Additionally, the corpus can be saved and loaded using the <code>save_corpus()</code> and <em>load_corpus()</em> methods.</p>
+<pre><code class="lang-python">bm25.save_corpus(<span class="hljs-string">"corpus.pkl"</span>, corpus)
+corpus_new <span class="hljs-type"></span>= bm25.load_corpus(<span class="hljs-string">"corpus.pkl"</span>)
+</code></pre>
+<p>&nbsp;</p>
+<hr>
+<h1 id="algorithms">Algorithms</h1>
+<ul>
+<li><a href="#1️-bm25-class-bm25BM25">BM25</a>      </li>
+<li><a href="#2️-tf-idf-class-tfidf">TF-IDF</a>      </li>
+<li><a href="#3️-bm11-class-bm11">BM11</a>        </li>
+<li><a href="#4️-bm15-class-bm15">BM15</a>             </li>
+<li><a href="#5️-bm25l-class-bm25l">BM25L</a>       </li>
+<li><a href="#6️-bm25-class-bm25plus">BM25+</a>           </li>
+<li><a href="#7️-bm25t-class-bm25t-beta">BM25T</a> <em>(beta)</em></li>
+</ul>
+<h2 id="1-bm25-class-bm25-">1️. BM25 <code>class BM25</code></h2>
+<p><strong>BM25 (Best Matching 25)</strong> is a ranking function used in information retrieval to score documents based on their relevance to a given query.
+It is an extension of the probabilistic retrieval model and is widely used in search engines and text retrieval systems.</p>
+<h3 id="formula">Formula</h3>
+<p>The BM25 score for a document <em>D</em> with respect to a query <em>Q</em> is given by:</p>
+<p> $$\text{score}(D, Q) = \sum_{t \in Q} IDF(t) \cdot \frac{ f(t, D) \cdot (k_1 + 1)}{ f(t, D) + k_1 \cdot (1 - b + b \cdot \frac{|D|}{\text{avgD}}) }$$</p>
+<h3 id="term-frequency-tf-">Term Frequency (TF)</h3>
+<p>Unlike raw Term Frequency, BM25 applies a saturation function, preventing a term from having an excessive influence on the score. Additionally, longer documents are adjusted so that they don’t get an unfair advantage just because they have more words.</p>
+<p> $$\text{TF}(D, t) = \frac{ f(t, D) \cdot (k_1 + 1)}{ f(t, D) + k_1 \cdot (1 - b + b \cdot \frac{|D|}{\text{avgD}}) }$$</p>
+<p>where,       </p>
+<ul>
+<li><em>f(t,D)</em> is the Term Frequency of term <em>t</em> in document <em>D</em>.</li>
+<li><em>|D|</em> is the length of the document <em>D</em> (number of words).</li>
+<li><em>avgD</em> is the average document length in the corpus.</li>
+<li><em>k1</em> and b are hyperparameters that control term frequency saturation and document length normalization.</li>
+</ul>
+<h3 id="inverse-document-frequency-idf-">Inverse Document Frequency (IDF)</h3>
+<p>The Inverse Document Frequency of term <em>t</em> typically computed as:</p>
+<p>$$IDF(t) = \log (\frac{N - n(t) + 0.5}{n(t) + 0.5})$$</p>
+<p>where,</p>
+<ul>
+<li><em>N</em> is the total number of documents in the corpus.</li>
+<li><em>n(t)</em> is the number of documents containing term <em>t</em>.</li>
+</ul>
+<p>Through <strong>Term frequency scaling</strong> and <strong>Document length normalization</strong>, BM25 shows improved performance in retrieval tasks compared to TF-IDF, BM11, and BM15, which do not fully apply or only partially apply these strategies.</p>
+<h3 id="set-bm25">Set BM25</h3>
+<pre><code class="lang-python">b<span class="hljs-name">m25</span> = B<span class="hljs-name">M25</span><span class="hljs-comment">()</span>
+b<span class="hljs-name">m25.</span>set_model<span class="hljs-comment">(corpus, k, b)</span>
+</code></pre>
+<h3 id="parameters">Parameters</h3>
+<ul>
+<li><strong>corpus</strong> (2-dimensional list): A set of documents to be retrieved. Each document in the inner lists must be tokenized.</li>
+<li><strong>k</strong> (float): <em>k1</em>. It controls the influence of Term Frequency (TF) on the final score, determining how quickly the score saturates as term frequency increases.(default = 1.5)</li>
+<li><strong>b</strong> (float): <em>b</em>. It adjusts the impact of document length normalization (default = 0.75)</li>
+</ul>
+<p>&nbsp;</p>
+<h2 id="2-tf-idf-class-tfidf-">2️. TF-IDF <code>class TFIDF</code></h2>
+<p><strong>TF-IDF</strong> is a retrieval algorithm that calculates relevance using raw Term Frequency (TF) and Inverse Document Frequency (IDF) without any normalization.
+Unlike BM25, it does not adjust for document length or term saturation. </p>
+<h3 id="formula">Formula</h3>
+<p>The TF-IDF score for a document <em>D</em> with respect to a query <em>Q</em> is given by:</p>
+<p>$$\text{score}(D, Q) = \sum_{t \in Q} IDF(t) \cdot \frac{f(t, D)}{|D|}$$</p>
+<h3 id="term-frequency-tf-">Term Frequency (TF)</h3>
+<p>TF-IDF does not apply global length normalization or term saturation, unlike BM25.
+However, it normalizes term frequency by dividing it by the document length, applying only local length normalization.</p>
+<p>$$TF(D, t) = \frac{f(t, D)}{|D|}$$</p>
+<p>where,       </p>
+<ul>
+<li><em>f(t,D)</em> is the Term Frequency of term <em>t</em> in document <em>D</em>.</li>
+<li><em>|D|</em> is the length of the document <em>D</em> (number of words).</li>
+</ul>
+<h3 id="inverse-document-frequency-idf-">Inverse Document Frequency (IDF)</h3>
+<p>The Inverse Document Frequency of TF-IDF is much simpler than that of BM25.</p>
+<p>$$IDF(D, t) = log(\frac{N}{1+n(t)})$$</p>
+<p>where,</p>
+<ul>
+<li><em>N</em> is the total number of documents in the corpus.</li>
+<li><em>n(t)</em> is the number of documents containing term <em>t</em>.</li>
+</ul>
+<h3 id="set-tf-idf">Set TF-IDF</h3>
+<pre><code class="lang-python">tfidf = TFIDF<span class="hljs-comment">()</span>
+tfidf.set_model<span class="hljs-comment">(corpus)</span>
+</code></pre>
+<h3 id="parameters">Parameters</h3>
+<ul>
+<li><strong>corpus</strong> (2-dimensional list): A set of documents to be retrieved. Each document in the inner lists must be tokenized.</li>
+</ul>
+<p>&nbsp;</p>
+<h2 id="3-bm11-class-bm11-">3️. BM11 <code>class BM11</code></h2>
+<p><strong>BM11</strong> is similar to BM25, but it differs in that it does not apply length normalization to the Term Frequency. Setting the hyperparameter <em>b</em> to 0 in BM25 makes it equivalent to BM11. Since it omits length normalization, its performance is generally lower than that of BM25. </p>
+<h3 id="formula">Formula</h3>
+<p>The BM11 score for a document <em>D</em> with respect to a query <em>Q</em> is given by:</p>
+<p>$$\text{score}(D, Q) = \sum_{t \in Q} IDF(t) \cdot \frac{ f(t, D) \cdot (k_1 + 1)}{ f(t, D) + k_1}$$</p>
+<h3 id="term-frequency-tf-">Term Frequency (TF)</h3>
+<p>Unlike raw Term Frequency, BM11 applies a saturation function like BM25, preventing a term from having an excessive influence on the score. However, it does not apply length normalization, unlike BM25.</p>
+<p>$$\text{TF}(D, t) = \frac{ f(t, D) \cdot (k_1 + 1)}{ f(t, D) + k_1}$$</p>
+<p>where,       </p>
+<ul>
+<li><em>f(t,D)</em> is the Term Frequency of term <em>t</em> in document <em>D</em>.</li>
+<li><em>|D|</em> is the length of the document <em>D</em> (number of words).</li>
+<li><em>avgD</em> is the average document length in the corpus.</li>
+<li><em>k1</em> is a hyperparameter that control term frequency saturation.</li>
+</ul>
+<h3 id="inverse-document-frequency-idf-">Inverse Document Frequency (IDF)</h3>
+<p>The Inverse Document Frequency of BM11 is the same as that of BM25.</p>
+<h3 id="set-bm11">Set BM11</h3>
+<pre><code class="lang-python">b<span class="hljs-name">m11</span> = B<span class="hljs-name">M11</span><span class="hljs-comment">()</span>
+b<span class="hljs-name">m11.</span>set_model<span class="hljs-comment">(corpus, k)</span>
+</code></pre>
+<h3 id="parameters">Parameters</h3>
+<ul>
+<li><strong>corpus</strong> (2-dimensional list): A set of documents to be retrieved. Each document in the inner lists must be tokenized.</li>
+<li><strong>k</strong> (float): <em>k1</em>. It controls the influence of Term Frequency (TF) on the final score, determining how quickly the score saturates as term frequency increases.(default = 1.5)</li>
+</ul>
+<p>&nbsp;</p>
+<h2 id="4-bm15-class-bm15-">4️. BM15 <code>class BM15</code></h2>
+<p><strong>BM15</strong> is similar to BM25, but it differs in that it fully applies length normalization to the Term Frequency. Setting the hyperparameter <em>b</em> to 1 in BM25 makes it equivalent to BM15. Since BM15 applies length normalization to such an extent that it ignores the difference in length, its performance is generally lower than that of BM25.</p>
+<h3 id="formula">Formula</h3>
+<p>The BM15 score for a document <em>D</em> with respect to a query <em>Q</em> is given by:</p>
+<p>$$\text{score}(D, Q) = \sum_{t \in Q} IDF(t) \cdot \frac{ f(t, D) \cdot (k_1 + 1)}{ f(t, D) + k_1 \cdot \frac{|D|}{\text{avgD}} }$$</p>
+<h3 id="term-frequency-tf-">Term Frequency (TF)</h3>
+<p>Unlike raw Term Frequency, BM15 applies full length normalization, unlike BM25, which applies it partially. However, it applies a saturation function like BM25, preventing a term from having an excessive influence on the score.</p>
+<p>$$TF(D, t) = \frac{ f(t, D) \cdot (k_1 + 1)}{ f(t, D) + k_1 \cdot \frac{|D|}{\text{avgD}} }$$</p>
+<p>where,       </p>
+<ul>
+<li><em>f(t,D)</em> is the Term Frequency of term <em>t</em> in document <em>D</em>.</li>
+<li><em>|D|</em> is the length of the document <em>D</em> (number of words).</li>
+<li><em>avgD</em> is the average document length in the corpus.</li>
+<li><em>k1</em> is a hyperparameter that control term frequency saturation.</li>
+</ul>
+<h3 id="inverse-document-frequency-idf-">Inverse Document Frequency (IDF)</h3>
+<p>The Inverse Document Frequency of BM15 is the same as that of BM25.</p>
+<h3 id="set-bm15">Set BM15</h3>
+<pre><code class="lang-python">b<span class="hljs-name">m15</span> = B<span class="hljs-name">M15</span><span class="hljs-comment">()</span>
+b<span class="hljs-name">m15.</span>set_model<span class="hljs-comment">(corpus, k)</span>
+</code></pre>
+<h3 id="parameters">Parameters</h3>
+<ul>
+<li><strong>corpus</strong> (2-dimensional list): A set of documents to be retrieved. Each document in the inner lists must be tokenized.</li>
+<li><strong>k</strong> (float): <em>k1</em>. It controls the influence of Term Frequency (TF) on the final score, determining how quickly the score saturates as term frequency increases.(default = 1.5)</li>
+</ul>
+<p>&nbsp;</p>
+<h2 id="5-bm25l-class-bm25l-">5️. BM25L <code>class BM25L</code></h2>
+<p><strong>BM25L</strong> is an extension of BM25 that modifies Term Frequency by incorporating length normalization directly into the Term Frequency calculation.
+It introduces a positive constant <em>δ</em>, preventing excessive penalization of long documents. This adjustment helps mitigate BM25’s tendency to favor shorter documents under certain conditions.</p>
+<h3 id="formula">Formula</h3>
+<p>The BM25L score for a document <em>D</em> with respect to a query <em>Q</em> is given by:</p>
+<p>$$\text{score}(D, Q) = \sum_{t \in Q} IDF(t) \cdot \frac{ (k_1 + 1) \cdot (c + \delta)}{k_1 + (c + \delta)}$$</p>
+<p>$$c = \frac{f(t, D) }{1 - b + b \cdot \frac{|D|}{\text{avgD}}}$$</p>
+<h3 id="term-frequency-tf-">Term Frequency (TF)</h3>
+<p>BM25L applies length normalization directly to <em>f(t, D)</em> in both numerator and denominator.
+Additionally, a positive constant <em>δ</em> is added to each normalized <em>f(t, D)</em>. </p>
+<p>$$\text{TF}(D, t) = \frac{ (k_1 + 1) \cdot (c + \delta)}{k_1 + (c + \delta)}$$</p>
+<p>$$c = \frac{f(t, D) }{1 - b + b \cdot \frac{|D|}{\text{avgD}}}$$</p>
+<p>where,       </p>
+<ul>
+<li><em>f(t,D)</em> is the Term Frequency of term <em>t</em> in document <em>D</em>.</li>
+<li><em>|D|</em> is the length of the document <em>D</em> (number of words).</li>
+<li><em>avgD</em> is the average document length in the corpus.</li>
+<li><em>k1</em> is a hyperparameter that control term frequency saturation.</li>
+<li><em>δ</em> is a positive constant to prevent excessive penalization of long documents.</li>
+</ul>
+<h3 id="inverse-document-frequency-idf-">Inverse Document Frequency (IDF)</h3>
+<p>The Inverse Document Frequency of BM15 is the same as that of BM25.</p>
+<h3 id="set-bm25l">Set BM25L</h3>
+<pre><code class="lang-python">b<span class="hljs-name">m25</span>l = B<span class="hljs-name">M25</span>L<span class="hljs-comment">()</span>
+b<span class="hljs-name">m25</span>l.set_model<span class="hljs-comment">(corpus, k, b, delta)</span>
+</code></pre>
+<h3 id="parameters">Parameters</h3>
+<ul>
+<li><strong>corpus</strong> (2-dimensional list): A set of documents to be retrieved. Each document in the inner lists must be tokenized.</li>
+<li><strong>k</strong> (float): <em>k1</em>. It controls the influence of Term Frequency (TF) on the final score, determining how quickly the score saturates as term frequency increases.(default = 1.5)</li>
+<li><strong>b</strong> (float): <em>b</em>. It adjusts the impact of document length normalization (default = 0.75)</li>
+<li><strong>delta</strong> (float): <em>δ</em>. It alleviates the over-penalization of long documents. It must to be greater than 0(default = 1.0) </li>
+</ul>
+<p>&nbsp;</p>
+<h2 id="6-bm25-class-bm25plus-">6️. BM25+ <code>class BM25Plus</code></h2>
+<p><strong>BM25+</strong> is an extension of BM25 that introduces a positive constant <em>δ</em> as a lower bound, preventing excessive penalization of long documents. This adjustment helps mitigate BM25’s tendency to favor shorter documents under certain conditions.</p>
+<h3 id="formula">Formula</h3>
+<p>The BM25+ score for a document <em>D</em> with respect to a query <em>Q</em> is given by:</p>
+<p>$$\text{score}(D, Q) = \sum_{t \in Q} IDF(t) \cdot (\frac{ f(t, D) \cdot (k_1 + 1)}{ f(t, D) + k_1 \cdot (1 - b + b \cdot \frac{|D|}{\text{avgD}}) } + \delta)$$</p>
+<h3 id="term-frequency-tf-">Term Frequency (TF)</h3>
+<p>BM25+ introduces a positive constant <em>δ</em> as a lower bound so that Term Frequency of BM25+ is always greater than 0.  </p>
+<p>$$TF(D, t) = \frac{ f(t, D) \cdot (k_1 + 1)}{ f(t, D) + k_1 \cdot (1 - b + b \cdot \frac{|D|}{\text{avgD}}) } + \delta$$  </p>
+<h3 id="inverse-document-frequency-idf-">Inverse Document Frequency (IDF)</h3>
+<p>The Inverse Document Frequency of BM15 is the same as that of BM25.</p>
+<h3 id="set-bm25-">Set BM25+</h3>
+<pre><code class="lang-python">b<span class="hljs-name">m25</span>plus = B<span class="hljs-name">M25</span>Plus<span class="hljs-comment">()</span>
+b<span class="hljs-name">m25</span>plus.set_model<span class="hljs-comment">(corpus, k, b, delta)</span>
+</code></pre>
+<h3 id="parameters">Parameters</h3>
+<ul>
+<li><strong>corpus</strong> (2-dimensional list): A set of documents to be retrieved. Each document in the inner lists must be tokenized.</li>
+<li><strong>k</strong> (float): <em>k1</em>. It controls the influence of Term Frequency (TF) on the final score, determining how quickly the score saturates as term frequency increases.(default = 1.5)</li>
+<li><strong>b</strong> (float): <em>b</em>. It adjusts the impact of document length normalization (default = 0.75)</li>
+<li><strong>delta</strong> (float): <em>δ</em>. It alleviates the over-penalization of long documents. It must to be greater than 0(default = 1.0) </li>
+</ul>
+<p>&nbsp;</p>
+<h2 id="7-bm25t-class-bm25t-beta-">7️. BM25T <code>class BM25T</code> <em>(beta)</em></h2>
+<p><strong>BM25T</strong> is an extension of BM25 that introduces term-specific <em>k1</em>.
+It adjusts the length-normalized Term Frequency so that its contribution reflects the proportion of documents where the term appears more frequently.</p>
+<h3 id="formula">Formula</h3>
+<p>When <em>Cw</em> is the set of all documents containing the term, the BM25T score for a document <em>D</em> with respect to a query <em>Q</em> is given by:</p>
+<p>$$\text{score}(D, Q) = \sum_{t \in Q} IDF(t) \cdot \frac{ f(t, D) \cdot ({k_1}^{&#39;} + 1)}{ f(t, D) + {k_1}^{&#39;} \cdot (1 - b + b \cdot \frac{|D|}{\text{avgD}}) }$$</p>
+<p>where,</p>
+<p>$${k_1}&#39; = \arg \min _{k_1} \left(g _{k_1} - \frac{\sum_{t \in C_w} \log(c) + 1}{n(t)}\right)^2$$</p>
+<p>$$g_{k_1} = 
+\begin{cases} 
+\frac{k_1}{k_1 - 1} \log(k_1) &amp; \text{if } k_1 \neq 1, \
+1 &amp; \text{if } k_1 = 1
+\end{cases}$$</p>
+<p>$$c = \frac{f(t, D) }{1 - b + b \cdot \frac{|D|}{\text{avgD}}}$$</p>
+<h3 id="term-frequency-tf-">Term Frequency (TF)</h3>
+<p>BM25T introduces a term-specific <em>k1&#39;</em> for calculating Term Frequency, ensuring that the contribution of length-normalized Term Frequency is proportional to the fraction of documents where it is higher. The value of <em>k1&#39;</em> is determined using the Newton-Raphson method. </p>
+<p>$$TF(D,t) = \frac{ f(t, D) \cdot ({k_1}^{&#39;} + 1)}{ f(t, D) + {k_1}^{&#39;} \cdot (1 - b + b \cdot \frac{|D|}{\text{avgD}})}$$</p>
+<p>where,</p>
+<p>$${k_1}&#39; = \arg \min _{k_1} \left(g _{k_1} - \frac{\sum_{t \in C_w} \log(c) + 1}{n(t)}\right)^2$$</p>
+<p>$$g_{k_1} = 
+\begin{cases} 
+\frac{k_1}{k_1 - 1} \log(k_1) &amp; \text{if } k_1 \neq 1, \
+1 &amp; \text{if } k_1 = 1
+\end{cases}$$</p>
+<p>$$c = \frac{f(t, D) }{1 - b + b \cdot \frac{|D|}{\text{avgD}}}$$</p>
+<h3 id="inverse-document-frequency-idf-">Inverse Document Frequency (IDF)</h3>
+<p>The Inverse Document Frequency of BM15 is the same as that of BM25.</p>
+<h3 id="set-bm25t">Set BM25T</h3>
+<pre><code class="lang-python">b<span class="hljs-name">m25</span>t = B<span class="hljs-name">M25</span>T<span class="hljs-comment">()</span>
+b<span class="hljs-name">m25</span>t.set_model<span class="hljs-comment">(corpus, k, b, eps, max_iter)</span>
+</code></pre>
+<h3 id="parameters">Parameters</h3>
+<ul>
+<li><strong>corpus</strong> (2-dimensional list): A set of documents to be retrieved. Each document in the inner lists must be tokenized.</li>
+<li><strong>k</strong> (float): <em>k1&#39;</em>. It controls the influence of Term Frequency (TF) on the final score, determining how quickly the score saturates as term frequency increases.(default = 1.5)</li>
+<li><strong>b</strong> (float): <em>b</em>. It adjusts the impact of document length normalization (default = 0.75)</li>
+<li><strong>eps</strong> (float):  The tolerance level for convergence in Newton-Raphson optimization. An iteration breaks when the change in value is smaller than this threshold. (default = 0.05)     </li>
+<li><strong>max_iter</strong> (int) The maximum number of iterations. If the algorithm cannot find the optimal value within max_iter iterations, the initial <em>k</em> is used as the final result. (default = 100) </li>
+</ul>
+<p>&nbsp;</p>
+<hr>
+<h1 id="citing">Citing</h1>
+<p>This code is based on the repository <a href="https://github.com/dorianbrown/rank_bm25">dorianbrown/rank_bm25</a>, which has been referenced for the development of this tool.</p>
+<pre><code>@misc{dorianbrown2022rank_bm25,
+      title={Rank-BM25: A two line search engine},
+      author={Dorian Brown},
+      year={<span class="hljs-number">2022</span>},
+      url={https://github.com/dorianbrown/rank_bm25},
+}
+</code></pre><p>If you use this <strong>BM25-Search</strong> library in your research or projects, please cite it as follows:</p>
+<pre><code>@misc{millet042025bm25-search,
+      title={BM25-Search},
+      author={Kim Minseok},
+      year={<span class="hljs-number">2025</span>},
+      url={https://github.com/millet04/bm25_search},
+}
+</code></pre><p>&nbsp;</p>
+<hr>
+<h1 id="release-history">Release History</h1>
+<p><code>version 0.1.0</code> <em>(2025.2.7)</em>          </p>
+<ul>
+<li>Provides seven BM25-based algorithms, including BM25, TF-IDF, BM11, BM15, BM25L, BM25+, and BM25T.  </li>
+</ul>
+<p><code>version 0.1.1</code> <em>(2025.2.15)</em>  </p>
+<ul>
+<li>Replace the static &#39;int&#39; type variables with a dynamically allocated &#39;long long int&#39; to support a larger number of documents.</li>
+<li>Modify some errors in the annotations and implementation details.</li>
+</ul>
+</body></html>

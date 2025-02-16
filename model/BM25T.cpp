@@ -23,7 +23,7 @@ namespace py = pybind11;
  *
  * Parameters
  * ----------
- *    - k (double) : Saturation parameter. (default = 2.0)
+ *    - k (double) : Saturation parameter. (default = 1.5)
  *                   Controls the influence of term frequency (TF) on the final score,
  *                   determining how quickly the score saturates as term frequency increases.
  *                   [NOTE] This k is iteratively updated during the process of finding the optimal k value.
@@ -43,8 +43,8 @@ void BM25T::set_tf(double k, double b, double eps, unsigned int max_iter) {
 
     for (const auto& word : df) {
         // Calculate 'freq(q, doc)', a frequency of a word in each document.  
-        vector<double> tf_vector(doc_n, 0.0);
-        for (unsigned int i = 0; i < doc_n; i++) {
+        vector<double> tf_vector(*doc_n, 0.0);
+        for (size_t i = 0; i < *doc_n; i++) {
             if (freq[i].find(word.first) != freq[i].end()) {
                 tf_vector[i]++;
             }
@@ -52,7 +52,7 @@ void BM25T::set_tf(double k, double b, double eps, unsigned int max_iter) {
 
         // Sum c for each word (calculate the length-normalized term frequency).
         double sum_log_c = 0.0;
-        for (unsigned int i = 0; i < doc_n; i++) {
+        for (size_t i = 0; i < *doc_n; i++) {
             double c = tf_vector[i] / (1 - b + b * (dl[i] / avgdl));
             sum_log_c += log(c);
         }
@@ -61,7 +61,7 @@ void BM25T::set_tf(double k, double b, double eps, unsigned int max_iter) {
         optk_set[word.first] = optk;
 
         // Calculates the BM25T TF values for all words. 
-        for (unsigned int i = 0; i < doc_n; i++) {
+        for (size_t i = 0; i < *doc_n; i++) {
             tf_vector[i] = tf_vector[i] * (optk + 1) / (tf_vector[i] + optk * (1 - b + b * dl[i] / avgdl));
         }
         tf[word.first] = tf_vector;
@@ -73,12 +73,12 @@ void BM25T::set_tf(double k, double b, double eps, unsigned int max_iter) {
  *
  * Parameters
  * ----------
- *    - k (double) : Saturation parameter. (default = 2.0)
+ *    - k (double) : Saturation parameter. (default = 1.5)
  *                   Controls the influence of term frequency (TF) on the final score,
  *                   determining how quickly the score saturates as term frequency increases.
  *                   [NOTE] This k is iteratively updated during the process of finding the optimal k value.
  *
- *    - eps (double) : The tolerance level for convergence in optimization. (default = 1e-6)
+ *    - eps (double) : The tolerance level for convergence in optimization. (default = 0.05)
  *                     The iteration breaks when the change in value is smaller than this threshold.
  *
  *    - max_iter (int) : The maximum number of iterations. (default = 100)
@@ -144,7 +144,7 @@ double BM25T::compute_optimal_k(const string& word, double k, double sum_log_c, 
  *                            [NOTE] Each document in the inner lists must be tokenized.
  *                            [EX]   [['the',...], ['a', ...], ... , ['hello', ...]]
  * 
- *     - k (double) : Saturation parameter. (default = 2.0)
+ *     - k (double) : Saturation parameter. (default = 1.5)
  *                    Controls the influence of term frequency (TF) on the final score,
  *                    determining how quickly the score saturates as term frequency increases.
  * 
@@ -152,7 +152,7 @@ double BM25T::compute_optimal_k(const string& word, double k, double sum_log_c, 
  *                    Adjusts the impact of document length normalization,
  *                    with b = 0 (BM15) ignoring length and b = 1 (BM11) fully normalizing by the average document length.
  * 
- *    - eps (double) : The tolerance level for convergence in optimization. (default = 1e-6)
+ *    - eps (double) : The tolerance level for convergence in optimization. (default = 0.05)
  *                     The iteration breaks when the change in value is smaller than this threshold.
  * 
  *    - max_iter (int) : The maximum number of iterations. (default = 100)
@@ -196,7 +196,7 @@ void BM25T::save_model(const string& filepath) {
     data["optk_set"] = optk_set;
     data["dl"] = dl;
     data["avgdl"] = avgdl;
-    data["doc_n"] = doc_n;
+    data["doc_n"] = *doc_n;
     data["freq"] = freq;
     data["df"] = df;
     data["tf"] = tf;
@@ -231,10 +231,10 @@ void BM25T::load_model(const string& filepath) {
     this->eps = data["eps"].cast<double>();
     this->max_iter = data["max_iter"].cast<unsigned int>();
     this->optk_set = data["optk_set"].cast<unordered_map<string, double>>();
-    this->dl = data["dl"].cast<vector<int>>();
+    this->dl = data["dl"].cast<vector<size_t>>();
     this->avgdl = data["avgdl"].cast<double>();
-    this->doc_n = data["doc_n"].cast<unsigned int>();
-    this->freq = data["freq"].cast<vector<unordered_map<string, int>>>();
+    *this->doc_n = data["doc_n"].cast<size_t>();
+    this->freq = data["freq"].cast<vector<unordered_map<string, size_t>>>();
     this->df = data["df"].cast<unordered_map<string, double>>();
     this->tf = data["tf"].cast<unordered_map<string, vector<double>>>();
     this->idf = data["idf"].cast<unordered_map<string, double>>();

@@ -2,13 +2,13 @@
 A collection of BM25 based algorithms, including BM25 itself, written in C++ and wrapped for Python.  
 The following algorithms are provided in `version 0.1.0`.
 
-🔹`BM25`    
-🔹`BM11`    
-🔹`BM15`    
-🔹`BM25L`    
-🔹`BM25Plus`     
-🔹`TFIDF`       
-🔹`(beta) BM25T`       
+- BM25
+- TF-IDF   
+- BM11   
+- BM15    
+- BM25L    
+- BM25+           
+- BM25T *(beta)*       
 
 &nbsp;
 
@@ -20,7 +20,7 @@ pip install bm25-search
 - __Python__: Python 3.6 to 3.13
 
  
-## 2. Usage
+## 2. Quick Start
 
 ### 1️⃣ Set Model 
 Calculate the TF (Term Frequency) and IDF (Inverse Document Frequency) for all tokens in the given documents using the `set_model()` method. This pre-calculation helps reduce latency during the search stage. 
@@ -100,20 +100,20 @@ corpus_new = bm25.load_corpus("corpus.pkl")
 ## 3. Other Algorhithms
 The following algorithms are provided, with the same usage, but different parameters for `set_model()` method. You can use them by creating an instance like `bm25plus = BM25Plus()` and following the guidance below regarding the parameters of the `set_model()` method. Please note that `BM25T` is still a beta version, so it might not work properly. 
 
-🔹`BM25` ➡️ ```bm25.set_model(corpus, k=1.5, b=0.75)```  
-🔹`BM11` ➡️ ```bm11.set_model(corpus, k=1.5)```         
-🔹`BM15` ➡️ ```bm15.set_model(corpus, k=1.5)```         
-🔹`BM25L` ➡️ ```bm25l.set_model(corpus, k=1.5, b=0.75, delta = 1.0)```           
-🔹`BM25Plus` ➡️ ```bm25plus.set_model(corpus, k=1.5, b=0.75, delta = 1.0)```     
-🔹`TFIDF` ➡️ ```tf_idf.set_model(corpus)```      
-🔹`(beta) BM25T` ➡️ ```bm25t.set_model(corpus, k=1.5, b=0.75, eps=0.1, max_iter=100)```            
+- BM25 `BM25` ➡️ ```bm25.set_model(corpus, k=1.5, b=0.75)```  
+- TF-IDF `TFIDF` ➡️ ```tf_idf.set_model(corpus)```  
+- BM11 `BM11` ➡️ ```bm11.set_model(corpus, k=1.5)```         
+- BM15 `BM15` ➡️ ```bm15.set_model(corpus, k=1.5)```         
+- BM25L `BM25L` ➡️ ```bm25l.set_model(corpus, k=1.5, b=0.75, delta = 1.0)```           
+- BM25+ `BM25Plus` ➡️ ```bm25plus.set_model(corpus, k=1.5, b=0.75, delta = 1.0)```       
+- BM25T *(beta)* `BM25T` ➡️ ```bm25t.set_model(corpus, k=1.5, b=0.75, eps=0.05, max_iter=100)```            
 
 &nbsp;
 
 ## Citing
 This code is based on the repository [dorianbrown/rank_bm25](https://github.com/dorianbrown/rank_bm25), which has been referenced for the development of this tool.
 ```
-@misc{doraianbrown2022rank_bm25,
+@misc{dorianbrown2022rank_bm25,
       title={Rank-BM25: A two line search engine},
       author={Dorian Brown},
       year={2022},
@@ -130,4 +130,3 @@ If you use this **BM25-Search** in your research or projects, please cite it as 
       url={https://github.com/millet04/bm25_search},
 }
 ```
-

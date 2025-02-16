@@ -13,6 +13,7 @@
 using namespace std;
 namespace py = pybind11;
 
+
 /**
  * BM25L::set_tf : A function that calculates and sets the BM25L TF values for all words.
  *                 This improves the efficiency of searching for a given query.
@@ -22,7 +23,7 @@ namespace py = pybind11;
  *
  * Parameters
  * ----------
- *    - k (double) : Saturation parameter. (default = 2.0)
+ *    - k (double) : Saturation parameter. (default = 1.5)
  *                   Controls the influence of term frequency (TF) on the final score,
  *                   determining how quickly the score saturates as term frequency increases.
  * 
@@ -38,15 +39,15 @@ void BM25L::set_tf(double k, double b, double delta) {
     for (const auto& word : df) {
 
         // Calculate 'freq(q, doc)', a frequency of a word in each document.  
-        vector<double> tf_vector(doc_n, 0.0);
-        for (unsigned int i = 0; i < doc_n; i++) {
+        vector<double> tf_vector(*doc_n, 0.0);
+        for (size_t i = 0; i < *doc_n; i++) {
             if (freq[i].find(word.first) != freq[i].end()) {
                 tf_vector[i]++;
             }
         }
 
         // Calculates the BM25L TF values for all words. 
-        for (unsigned int i = 0; i < doc_n; i++) {
+        for (size_t i = 0; i < *doc_n; i++) {
             double c = tf_vector[i] / (1 - b + b * dl[i] / avgdl);
             tf_vector[i] = (k + 1) * (c + delta) / (k + (c + delta));
         }
@@ -63,7 +64,7 @@ void BM25L::set_tf(double k, double b, double delta) {
  *                            [NOTE] Each document in the inner lists must be tokenized.
  *                            [EX]   [['the',...], ['a', ...], ... , ['hello', ...]]
  * 
- *     - k (double) : Saturation parameter. (default = 2.0)
+ *     - k (double) : Saturation parameter. (default = 1.5)
  *                    Controls the influence of term frequency (TF) on the final score,
  *                    determining how quickly the score saturates as term frequency increases.
  * 
@@ -110,7 +111,7 @@ void BM25L::save_model(const string& filepath) {
     data["delta"] = delta;
     data["dl"] = dl;
     data["avgdl"] = avgdl;
-    data["doc_n"] = doc_n;
+    data["doc_n"] = *doc_n;
     data["freq"] = freq;
     data["df"] = df;
     data["tf"] = tf;
@@ -143,10 +144,10 @@ void BM25L::load_model(const string& filepath) {
     this->k = data["k"].cast<double>();
     this->b = data["b"].cast<double>();
     this->delta = data["delta"].cast<double>();
-    this->dl = data["dl"].cast<vector<int>>();
+    this->dl = data["dl"].cast<vector<size_t>>();
     this->avgdl = data["avgdl"].cast<double>();
-    this->doc_n = data["doc_n"].cast<unsigned int>();
-    this->freq = data["freq"].cast<vector<unordered_map<string, int>>>();
+    *this->doc_n = data["doc_n"].cast<size_t>();
+    this->freq = data["freq"].cast<vector<unordered_map<string, size_t>>>();
     this->df = data["df"].cast<unordered_map<string, double>>();
     this->tf = data["tf"].cast<unordered_map<string, vector<double>>>();
     this->idf = data["idf"].cast<unordered_map<string, double>>();
