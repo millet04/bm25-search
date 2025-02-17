@@ -18,7 +18,7 @@ description: Python BM25 Tool
 
 ---------------
 # Overview
-A collection of BM25-based algorithms, including BM25 itself, written in C++ and wrapped for Python. The following algorithms are provided in `version 0.1.0`.
+A collection of BM25-based algorithms, including BM25 itself, written in C++ and wrapped for Python. The following algorithms are provided in `version 0.1.1`.
 
 - [BM25](#1-bm25-class-bm25)      
 - [TF-IDF](#2-tf-idf-class-tfidf)      
@@ -86,6 +86,20 @@ bm25.get_scores(queries_tokenized)
 You can obtain the scores and indices of top-k documents for the given queries using the `get_topk()` method.
 ```python
 bm25.get_topk(queries_tokenized, n=2)
+```
+```
+([[1.4166511719473336, 0.0], [2.833302343894667, 0.0]], [[3, 0], [4, 0]])
+```
+
+### 4️⃣ Get Top-K Docs
+You can obtain the top-k documents for the given queries using the `get_topk_docs()` method.
+
+```python
+bm25.get_topk_docs(queries_tokenized, corpus, n=2)
+```
+```
+[['Snow is expected tonight', 'The sun is shining brightly'],
+ ['The sky is cloudy', 'The sun is shining brightly']]
 ```
 
 ### 5️⃣ Save & Load
