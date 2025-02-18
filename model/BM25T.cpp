@@ -54,7 +54,7 @@ void BM25T::set_tf(double k, double b, double eps, unsigned int max_iter) {
         double sum_log_c = 0.0;
         for (size_t i = 0; i < *doc_n; i++) {
             double c = tf_vector[i] / (1 - b + b * (dl[i] / avgdl));
-            if tf_vector[i] > 0 {
+            if (c > 0) {
                 sum_log_c += log(c);
             }
         }
