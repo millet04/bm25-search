@@ -18,7 +18,7 @@ description: Python BM25 Tool
 
 ---------------
 # Overview
-A collection of BM25-based algorithms, including BM25 itself, written in C++ and wrapped for Python. The following algorithms are provided in `version 0.1.1`.
+A collection of BM25-based algorithms, including BM25 itself, written in C++ and wrapped for Python. The following algorithms are provided in `version 0.1.2`.
 
 - [BM25](#1-bm25-class-bm25)      
 - [TF-IDF](#2-tf-idf-class-tfidf)      
@@ -26,13 +26,13 @@ A collection of BM25-based algorithms, including BM25 itself, written in C++ and
 - [BM15](#4-bm15-class-bm15)             
 - [BM25L](#5-bm25l-class-bm25l)       
 - [BM25+](#6-bm25-class-bm25plus)           
-- [BM25T](#7-bm25t-class-bm25t-beta) *(beta)*      
+- [BM25T](#7-bm25t-class-bm25t)
 
 &nbsp;
 
 ------------
 
-# Installation (version 0.1.1)
+# Installation (version 0.1.2)
 
 ```
 pip install bm25-search
@@ -129,7 +129,7 @@ corpus_new = bm25.load_corpus("corpus.pkl")
 - [BM15](#4-bm15-class-bm15)             
 - [BM25L](#5-bm25l-class-bm25l)       
 - [BM25+](#6-bm25-class-bm25plus)           
-- [BM25T](#7-bm25t-class-bm25t-beta) *(beta)*
+- [BM25T](#7-bm25t-class-bm25t)
 
 
 ## 1. BM25 `class BM25`
@@ -387,8 +387,15 @@ $$\text{score}(D, Q) = \sum_{t \in Q} IDF(t) \cdot (\frac{ f(t, D) \cdot (k_1 + 
 
 BM25+ introduces a positive constant *δ* as a lower bound so that Term Frequency of BM25+ is always greater than 0.  
 
+$$TF(D, t) = \frac{ f(t, D) \cdot (k_1 + 1)}{ f(t, D) + k_1 \cdot (1 - b + b \cdot \frac{|D|}{\text{avgD}}) } + \delta$$ 
 
-$$TF(D, t) = \frac{ f(t, D) \cdot (k_1 + 1)}{ f(t, D) + k_1 \cdot (1 - b + b \cdot \frac{|D|}{\text{avgD}}) } + \delta$$  
+where,
+
+- *f(t,D)* is the Term Frequency of term *t* in document *D*.
+- *\|D\|* is the length of the document *D* (number of words).
+- *avgD* is the average document length in the corpus.
+- *k1* is a hyperparameter that control term frequency saturation.
+- *δ* is a positive constant to prevent excessive penalization of long documents.
 
 
 ### Inverse Document Frequency (IDF)
@@ -409,7 +416,7 @@ bm25plus.set_model(corpus, k, b, delta)
 
 &nbsp;
 
-## 7. BM25T `class BM25T` *(beta)*
+## 7. BM25T `class BM25T`
 **BM25T** is an extension of BM25 that introduces term-specific *k1*.
 It adjusts the length-normalized Term Frequency so that its contribution reflects the proportion of documents where the term appears more frequently.
 
@@ -424,7 +431,7 @@ $$\text{score}(D, Q) = \sum_{t \in Q} IDF(t) \cdot \frac{ f(t, D) \cdot ({k_1}^{
 where,
              
 
-$${k\_1}' = \arg \min \_{k\_1} \left(g \_{k\_1} - \frac{\sum_{t \in C\_w} \log(c) + 1}{n(t)}\right)^2$$
+$${k_1}' = \arg \min_{k_1} \left(g_{k_1} - \frac{\sum_{t \in C\_w} \log(c) + 1}{n(t)}\right)^2$$
 
 
 $$g_{k_1} = 
@@ -448,7 +455,7 @@ $$TF(D,t) = \frac{ f(t, D) \cdot ({k_1}^{'} + 1)}{ f(t, D) + {k_1}^{'} \cdot (1 
 where,
 
 
-$${k\_1}' = \arg \min \_{k\_1} \left(g \_{k\_1} - \frac{\sum_{t \in C\_w} \log(c) + 1}{n(t)}\right)^2$$
+$${k_1}' = \arg \min_{k_1} \left(g_{k_1} - \frac{\sum_{t \in C_{w}} \log(c) + 1}{n(t)}\right)^2$$
 
 
 $$g_{k_1} = 
@@ -459,6 +466,14 @@ $$g_{k_1} =
 
 
 $$c = \frac{f(t, D) }{1 - b + b \cdot \frac{|D|}{\text{avgD}}}$$
+
+where,
+
+- *f(t,D)* is the Term Frequency of term *t* in document *D*.
+- *\|D\|* is the length of the document *D* (number of words).
+- *avgD* is the average document length in the corpus.
+- *Cw* is the set of all documents containing the term.
+- *k1'* is the saturation parameter assigned to each term. It is initialized with the hyperparameter k1 and optimized for each term using the Newton-Raphson method. (The optimized *k1'* values for each term can be accessed through the `optk_set` attribute of the model object.)
 
 
 ### Inverse Document Frequency (IDF)
@@ -513,3 +528,7 @@ If you use this **BM25-Search** library in your research or projects, please cit
 `version 0.1.1` *(2025.2.15)*  
 - Replace the static 'int' type variables with a dynamically allocated 'long long int' to support a larger number of documents.
 - Modify some errors in the annotations and implementation details.
+
+`version 0.1.2` *(2025.2.18)*
+- Fix an error in the BM25T algorithm to ensure proper functionality.
+- Modify some typos in the README and the document. 

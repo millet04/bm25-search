@@ -1,6 +1,6 @@
 # BM25-Search
 A collection of BM25 based algorithms, including BM25 itself, written in C++ and wrapped for Python.  
-The following algorithms are provided in `version 0.1.0`.
+The following algorithms are provided in `version 0.1.2`.
 
 - BM25
 - TF-IDF   
@@ -8,9 +8,14 @@ The following algorithms are provided in `version 0.1.0`.
 - BM15    
 - BM25L    
 - BM25+           
-- BM25T *(beta)*       
+- BM25T   
 
 &nbsp;
+
+For detailed information on the algorithm and usage, refer to the following document:
+[https://millet04.github.io/bm25-search/](https://millet04.github.io/bm25-search/)
+
+
 
 ## 1. Installation
 ```
@@ -98,7 +103,7 @@ corpus_new = bm25.load_corpus("corpus.pkl")
 ```
 
 ## 3. Other Algorhithms
-The following algorithms are provided, with the same usage, but different parameters for `set_model()` method. You can use them by creating an instance like `bm25plus = BM25Plus()` and following the guidance below regarding the parameters of the `set_model()` method. Please note that `BM25T` is still a beta version, so it might not work properly. 
+The following algorithms are provided, with the same usage, but different parameters for `set_model()` method. You can use them by creating an instance like `bm25plus = BM25Plus()` and following the guidance below regarding the parameters of the `set_model()` method.
 
 - BM25 `BM25` ➡️ ```bm25.set_model(corpus, k=1.5, b=0.75)```  
 - TF-IDF `TFIDF` ➡️ ```tf_idf.set_model(corpus)```  
@@ -106,7 +111,7 @@ The following algorithms are provided, with the same usage, but different parame
 - BM15 `BM15` ➡️ ```bm15.set_model(corpus, k=1.5)```         
 - BM25L `BM25L` ➡️ ```bm25l.set_model(corpus, k=1.5, b=0.75, delta = 1.0)```           
 - BM25+ `BM25Plus` ➡️ ```bm25plus.set_model(corpus, k=1.5, b=0.75, delta = 1.0)```       
-- BM25T *(beta)* `BM25T` ➡️ ```bm25t.set_model(corpus, k=1.5, b=0.75, eps=0.05, max_iter=100)```            
+- BM25T `BM25T` ➡️ ```bm25t.set_model(corpus, k=1.5, b=0.75, eps=0.05, max_iter=100)```            
 
 &nbsp;
 
