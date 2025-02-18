@@ -54,7 +54,9 @@ void BM25T::set_tf(double k, double b, double eps, unsigned int max_iter) {
         double sum_log_c = 0.0;
         for (size_t i = 0; i < *doc_n; i++) {
             double c = tf_vector[i] / (1 - b + b * (dl[i] / avgdl));
-            sum_log_c += log(c);
+            if tf_vector[i] > 0 {
+                sum_log_c += log(c);
+            }
         }
 
         double optk = compute_optimal_k(word.first, k, sum_log_c, eps, max_iter);
