@@ -20,7 +20,7 @@ sfc_module = Extension(
 
 setup(
     name='bm25_search',
-    version='0.1.2',
+    version='0.1.3',
     description='Python Package with BM25 Algorithms C++ extension using Pybind11',
     ext_modules=[sfc_module],
     zip_safe=False,
