@@ -53,10 +53,9 @@ void Base::init(const vector<vector<string>>&corpus) {
         for (const auto& word : words) {
             df[word]++;
         }
- 
-        // The average length of all documents.
-        avgdl = static_cast<double>(suml) / corpus.size();
     }
+    // The average length of all documents.
+    avgdl = static_cast<double>(suml) / corpus.size();
 }
  
  
