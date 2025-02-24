@@ -10,6 +10,7 @@
 #include "model/BM25L.h"
 #include "model/BM25Plus.h"
 #include "model/BM25T.h"
+#include "model/BM25F.h"
 
 
 using namespace std;
@@ -102,4 +103,20 @@ PYBIND11_MODULE(bm25_search, m) {
         .def_readwrite("eps", &BM25T::eps)
         .def_readwrite("max_iter", &BM25T::max_iter)
         .def_readwrite("optk_set", &BM25T::optk_set);
+
+    py::class_<BM25F, Base>(m, "BM25F")
+        .def(py::init<>())
+        .def("set_tf", &BM25F::set_tf, "Set term frequency values", py::arg("field_n"), py::arg("k"), py::arg("b"), py::arg("w"))
+        .def("set_idf", &BM25F::set_idf, "Calculate the IDF values")
+        .def("set_model", &BM25F::set_model, "Set a BM25F model", py::arg("corpus"), py::arg("k") = 1.5, py::arg("b") = vector<double>{ 0.75, 0.75 }, py::arg("w") = vector<double>{ 3.0, 1.0 })
+        .def("save_model", &BM25F::save_model, "Save a BM25F model", py::arg("filepath"))
+        .def("load_model", &BM25F::load_model, "Load a BM25F model", py::arg("filepath"))
+        .def("get_topk_docs", &BM25F::get_topk_docs, "Get top-k documents", py::arg("queries"), py::arg("docs"), py::arg("n") = 5)
+        .def_readwrite("k", &BM25F::k)
+        .def_readwrite("b", &BM25F::b)
+        .def_readwrite("w", &BM25F::w)
+        .def_readwrite("field_avgdl", &BM25F::field_avgdl)
+        .def_readwrite("field_dl", &BM25F::field_dl)
+        .def_readwrite("total_df", &BM25F::total_df)
+        .def_readwrite("field_freq", &BM25F::field_freq);
 }

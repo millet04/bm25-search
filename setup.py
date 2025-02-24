@@ -12,6 +12,7 @@ sfc_module = Extension(
         'model/BM25L.cpp',
         'model/BM25Plus.cpp',
         'model/BM25T.cpp',
+        'model/BM25F.cpp',
         'binding.cpp'
         ],
     include_dirs=[pybind11.get_include()],
@@ -20,7 +21,7 @@ sfc_module = Extension(
 
 setup(
     name='bm25_search',
-    version='0.1.3',
+    version='0.2.0',
     description='Python Package with BM25 Algorithms C++ extension using Pybind11',
     ext_modules=[sfc_module],
     zip_safe=False,
