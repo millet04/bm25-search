@@ -10,7 +10,7 @@ description: Python BM25 Tool
 
           
 [Overview](#Overview)      
-[Installation](#installation-version-011)       
+[Installation](#installation-version-020)       
 [Quick Start](#quick-start)                         
 [Algorithms](#algorithms)    
 [Citing](#citing)         
@@ -18,7 +18,7 @@ description: Python BM25 Tool
 
 ---------------
 # Overview
-A collection of BM25-based algorithms, including BM25 itself, written in C++ and wrapped for Python. The following algorithms are provided in `version 0.1.2`.
+A collection of BM25-based algorithms, including BM25 itself, written in C++ and wrapped for Python. The following algorithms are provided in `version 0.2.0`.
 
 - [BM25](#1-bm25-class-bm25)      
 - [TF-IDF](#2-tf-idf-class-tfidf)      
@@ -27,12 +27,13 @@ A collection of BM25-based algorithms, including BM25 itself, written in C++ and
 - [BM25L](#5-bm25l-class-bm25l)       
 - [BM25+](#6-bm25-class-bm25plus)           
 - [BM25T](#7-bm25t-class-bm25t)
+- [BM25F](#8-bm25f-class-bm25f)
 
 &nbsp;
 
 ------------
 
-# Installation (version 0.1.2)
+# Installation (version 0.2.0)
 
 ```
 pip install bm25-search
@@ -112,10 +113,49 @@ You can load the saved model using the `load_model()` method.
 bm25_new = BM25()
 bm25_new.load_model("mybm25.pkl")
 ```
-Additionally, the corpus can be saved and loaded using the `save_corpus()` and *load_corpus()* methods.
+Additionally, the corpus can be saved and loaded using the `save_corpus()` and `load_corpus()` methods.
 ```python
 bm25.save_corpus("corpus.pkl", corpus)
 corpus_new = bm25.load_corpus("corpus.pkl")
+```
+
+### 6️⃣ BM25F
+
+The BM25F algorithm computes scores for each field and combines them using weights to produce the final score.
+Since the scoring is field-based, a document must have multiple fields.
+
+```python
+# Each document must have multiple fields, such as 'title' and 'text'.
+corpus = [
+    {'title': "Morning Routine",
+     'text': "I wake up early and drink a cup of coffee"},
+    {'title': "A Rainy Day",
+     'text': "She gets lost in the pages of her favorite novel"},
+    {'title':" Lost in a Book",
+     'text': "She gets lost in the pages of her favorite novel"},
+    {'title':"A Walk in the Park",
+     'text':"Birds chirp as I stroll through the quiet park"},
+    {'title':"Weekend Plans",
+     'text':"We will go to the beach this Saturday"}
+]
+
+# The text in each document's fields should be grouped by field.
+corpus_tokenized = [[] for _ in range(2)]
+
+for doc in corpus:
+    corpus_tokenized[0].append(doc['title'].lower().split())
+    corpus_tokenized[1].append(doc['text'].lower().split())
+
+bm25f = BM25F()
+
+# TF and IDF calculations are done at this stage, 
+# so this might take a while if the corpus is large.
+bm25f.set_model(corpus_tokenized, k=1.5, b=[0.75, 0.75], w=[3.0, 1.0])
+```
+The parameters(*corpus*) of method `get_topk_docs()` of `BM25F` should be of dictionary type. Therefore, it's better to process documents as dictionaries, as shown in the example above.   
+
+```
+bm25f.get_topk_docs(queries_tokenized, corpus, n=2)
 ```
 
 &nbsp;
@@ -130,6 +170,7 @@ corpus_new = bm25.load_corpus("corpus.pkl")
 - [BM25L](#5-bm25l-class-bm25l)       
 - [BM25+](#6-bm25-class-bm25plus)           
 - [BM25T](#7-bm25t-class-bm25t)
+- [BM25F](#8-bm25f-class-bm25f)
 
 
 ## 1. BM25 `class BM25`
@@ -356,7 +397,7 @@ where,
 
 ### Inverse Document Frequency (IDF)
 
-The Inverse Document Frequency of BM15 is the same as that of BM25.
+The Inverse Document Frequency of BM25L is the same as that of BM25.
 
 ### Set BM25L
 ```python
@@ -400,7 +441,7 @@ where,
 
 ### Inverse Document Frequency (IDF)
 
-The Inverse Document Frequency of BM15 is the same as that of BM25.
+The Inverse Document Frequency of BM25+ is the same as that of BM25.
 
 ### Set BM25+
 ```python
@@ -478,7 +519,7 @@ where,
 
 ### Inverse Document Frequency (IDF)
 
-The Inverse Document Frequency of BM15 is the same as that of BM25.
+The Inverse Document Frequency of BM25T is the same as that of BM25.
 
 ### Set BM25T
 ```python
@@ -493,18 +534,94 @@ bm25t.set_model(corpus, k, b, eps, max_iter)
 - **eps** (float):  The tolerance level for convergence in Newton-Raphson optimization. An iteration breaks when the change in value is smaller than this threshold. (default = 0.05)     
 - **max_iter** (int) The maximum number of iterations. If the algorithm cannot find the optimal value within max_iter iterations, the initial *k* is used as the final result. (default = 100) 
 
+## 8. BM25F `class BM25F`
+
+**BM25F** is an extension of BM25 that computes scores for each field and combines them using weights to produce the final score. 
+Since it allows assigning weights based on the importance of each field, it is useful for searching documents with multiple sections, such as those divided into a title and text.
+
+### Formula
+
+When *Z* is the number of fields, the BM25F score for a document *D* with respect to a query *Q* is given by:
+
+$$\text{score}(D, Q) = \sum_{t \in Q} IDF(t) \cdot \frac{ \tilde f(t, D) \cdot (k_1 + 1)}{ \tilde f(t, D) + k_{1} }$$
+
+
+where,
+
+$$\tilde f(t, D) = \sum_{z=1}^{Z} w_{z} \frac{f(t, D_{z})}{B_{z}}$$
+
+$$ B_{z} = (1-b_{z}) + b_{z} \frac{dl_{z}}{avgdl_{z}} $$
+
+### Term Frequency (TF)
+
+In BM25F, the Term Frequency (TF) is calculated for each field separately and then combined to compute the final TF.
+Each field is multiplied by a corresponding weight, which is a hyperparameter, so the document receives a higher score if a query term appears in a field with a higher weight.
+
+
+$$TF(D, t) = \frac{ \tilde f(t, D) \cdot (k_1 + 1)}{ \tilde f(t, D) + k_{1} }$$
+
+where,
+
+$$\tilde f(t, D) = \sum_{z=1}^{Z} w_{z} \frac{f(t, D_{z})}{B_{z}}$$
+
+$$ B_{z} = (1-b_{z}) + b_{z} \frac{|D_{z}|}{avgD_{z}} $$
+
+where,
+
+- *f(t,Dz)* is the Term Frequency of term *t* in the document of the field *Dz*.
+- *\|Dz\|* is the length of the document of the field *Dz* (number of words).
+- *avgDz* is the average document length in the field.
+- *wz* is the set of all documents containing the term.
+- *k1* is a hyperparameter that control term frequency saturation.
+
+
+### Inverse Document Frequency (IDF)
+
+The Inverse Document Frequency of BM25F is the same as that of BM25. Note that the IDF is calculated based on the entire document rather than individual fields.
+
+### Set BM25F
+
+[BM25F Example](#6️⃣-bm25f)
+
+```python
+bm25f = BM25F()
+bm25f.set_model(corpus, k, b, w)
+```
+
+### Parameters
+- **corpus** (3-dimensional list): A set of documents to be retrieved. The documents should be divided by fields.
+For example, if there are two fields, the first inner list should contain the text from all first fields, and the second inner list should contain the text from all second fields.
+Each text in the innermost lists must be tokenized.
+- **k** (float): *k1'*. It controls the influence of Term Frequency (TF) on the final score, determining how quickly the score saturates as term frequency increases.(default = 1.5)
+- **b** (1-dimensional list): *b*. It adjusts the impact of document length normalization. If more values are assigned than the number of fields, the excess values are truncated from the end.
+If fewer values are assigned, 0.75 is added from the end until the required number is reached.
+- **w** (1-dimensional list): *w*. It assigns weights to the importance of each field. The weight assigned to the first field is initialized to 3.0, while all other fields are set to 1.0.
+If more values are assigned than the number of fields, the excess values are truncated from the end.
+If fewer values are assigned, 1.0 is added from the end until the required number is reached.
+
 &nbsp;
 
 ----------------
 # Citing
 
-This code is based on the repository [dorianbrown/rank_bm25](https://github.com/dorianbrown/rank_bm25), which has been referenced for the development of this tool.
+This code is referenced from the repository [dorianbrown/rank_bm25](https://github.com/dorianbrown/rank_bm25).
 ```
 @misc{dorianbrown2022rank_bm25,
       title={Rank-BM25: A two line search engine},
       author={Dorian Brown},
       year={2022},
       url={https://github.com/dorianbrown/rank_bm25},
+}
+```
+
+Some algorithms are referenced from this paper.
+```
+@inproceedings{andrew2014improvements,
+      title={Improvements to BM25 and Language Models Examined},
+      author={Andrew Trotman, Antti Puurula, and Blake Burgess},
+      year={2014},
+      publisher={ADCS'14, November 27-28 2014, Melbourne, VIC, Australia},
+      url={http://www.cs.otago.ac.nz/homepages/andrew/papers/2014-2.pdf},
 }
 ```
 
@@ -532,3 +649,11 @@ If you use this **BM25-Search** library in your research or projects, please cit
 `version 0.1.2` *(2025.2.18)*
 - Fix an error in the BM25T algorithm to ensure proper functionality.
 - Modify some typos in the README and the document. 
+
+`version 0.1.3` *(2025.2.20)*
+- Fix a bug related to 'avgdl' in Base.cpp.
+- Since 'avgdl' was computed inside an extra inner loop, the scores in the previous version were overestimated.
+
+`version 0.2.0` *(2025.2.24)*
+- Add the BM25F algorithm to the library.
+- Update README and the document.

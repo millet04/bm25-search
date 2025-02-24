@@ -1,6 +1,6 @@
 # BM25-Search
 A collection of BM25 based algorithms, including BM25 itself, written in C++ and wrapped for Python.  
-The following algorithms are provided in `version 0.1.2`.
+The following algorithms are provided in `version 0.2.0`.
 
 - BM25
 - TF-IDF   
@@ -8,7 +8,8 @@ The following algorithms are provided in `version 0.1.2`.
 - BM15    
 - BM25L    
 - BM25+           
-- BM25T   
+- BM25T
+- BM25F   
 
 &nbsp;
 
@@ -111,12 +112,51 @@ The following algorithms are provided, with the same usage, but different parame
 - BM15 `BM15` ➡️ ```bm15.set_model(corpus, k=1.5)```         
 - BM25L `BM25L` ➡️ ```bm25l.set_model(corpus, k=1.5, b=0.75, delta = 1.0)```           
 - BM25+ `BM25Plus` ➡️ ```bm25plus.set_model(corpus, k=1.5, b=0.75, delta = 1.0)```       
-- BM25T `BM25T` ➡️ ```bm25t.set_model(corpus, k=1.5, b=0.75, eps=0.05, max_iter=100)```            
+- BM25T `BM25T` ➡️ ```bm25t.set_model(corpus, k=1.5, b=0.75, eps=0.05, max_iter=100)```
+
+
+## 4. BM25F
+The BM25F algorithm computes scores for each field and combines them using weights to produce the final score.
+Since the scoring is field-based, a document must have multiple fields.
+
+```python
+# Each document must have multiple fields, such as 'title' and 'text'.
+corpus = [
+    {'title': "Morning Routine",
+     'text': "I wake up early and drink a cup of coffee"},
+    {'title': "A Rainy Day",
+     'text': "She gets lost in the pages of her favorite novel"},
+    {'title':" Lost in a Book",
+     'text': "She gets lost in the pages of her favorite novel"},
+    {'title':"A Walk in the Park",
+     'text':"Birds chirp as I stroll through the quiet park"},
+    {'title':"Weekend Plans",
+     'text':"We will go to the beach this Saturday"}
+]
+
+# The text in each document's fields should be grouped by field.
+corpus_tokenized = [[] for _ in range(2)]
+
+for doc in corpus:
+    corpus_tokenized[0].append(doc['title'].lower().split())
+    corpus_tokenized[1].append(doc['text'].lower().split())
+
+bm25f = BM25F()
+
+# TF and IDF calculations are done at this stage, 
+# so this might take a while if the corpus is large.
+bm25f.set_model(corpus_tokenized, k=1.5, b=[0.75, 0.75], w=[3.0, 1.0])
+```
+The parameters(*corpus*) of method `get_topk_docs()` of `BM25F` should be of dictionary type. Therefore, it's better to process documents as dictionaries, as shown in the example above.   
+
+```
+bm25f.get_topk_docs(queries_tokenized, corpus, n=2)
+```
 
 &nbsp;
 
 ## Citing
-This code is based on the repository [dorianbrown/rank_bm25](https://github.com/dorianbrown/rank_bm25), which has been referenced for the development of this tool.
+This code is referenced from the repository [dorianbrown/rank_bm25](https://github.com/dorianbrown/rank_bm25).
 ```
 @misc{dorianbrown2022rank_bm25,
       title={Rank-BM25: A two line search engine},
