@@ -34,8 +34,9 @@ void BM15::set_tf(double k) {
         // Calculate 'freq(q, doc)', a frequency of a word in each document.  
         vector<double> tf_vector(*doc_n, 0.0);
         for (size_t i = 0; i < *doc_n; i++) {
-            if (freq[i].find(word.first) != freq[i].end()) {
-                tf_vector[i]++;
+            const auto term = freq[i].find(word.first);
+            if (term != freq[i].end()) {
+                tf_vector[i] = static_cast<double>(term->second);
             }
         }
 
