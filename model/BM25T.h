@@ -22,7 +22,7 @@ public:
 
     void set_tf(double k, double b, double eps, unsigned int max_iter);
     double compute_optimal_k(const string& word, double k, double sum_log_c, double eps, unsigned int max_iter);
-    void set_model(const vector<vector<string>>& corpus, double k = 1.5, double b = 0.75, double eps = 0.1, unsigned int max_iter = 100);
+    void set_model(const vector<vector<string>>& corpus, double k = 1.5, double b = 0.75, double eps = 0.05, unsigned int max_iter = 100);
     void save_model(const string& filepath) override;
     void load_model(const string& filepath) override;
 

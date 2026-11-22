@@ -3,14 +3,19 @@
 #include <pybind11/stl_bind.h>
 
 #include "model/Base.h"
+#include "model/CSRBase.h"
 #include "model/TfIdf.h"
 #include "model/BM25.h"
+#include "model/BM25_CSR.h"
+#include "model/CSRAlgorithms.h"
 #include "model/BM11.h"
 #include "model/BM15.h"
 #include "model/BM25L.h"
 #include "model/BM25Plus.h"
 #include "model/BM25T.h"
 #include "model/BM25F.h"
+#include "model/BM25T_CSR.h"
+#include "model/BM25F_CSR.h"
 
 
 using namespace std;
@@ -38,6 +43,14 @@ PYBIND11_MODULE(bm25_search, m) {
         .def_readwrite("tf", &Base::tf)
         .def_readwrite("freq", &Base::freq);
 
+    py::class_<CSRBase, Base>(m, "CSRBase")
+        .def(py::init<>())
+        .def("get_scores", &CSRBase::get_scores, "Get scores from the CSR matrix", py::arg("queries"))
+        .def_readwrite("csr_indptr", &CSRBase::csr_indptr)
+        .def_readwrite("csr_indices", &CSRBase::csr_indices)
+        .def_readwrite("csr_data", &CSRBase::csr_data)
+        .def_readwrite("csr_vocabulary", &CSRBase::csr_vocabulary);
+
     py::class_<TFIDF, Base>(m, "TFIDF")
         .def(py::init<>())
         .def("set_tf", &TFIDF::set_tf, "Set term frequency values")
@@ -54,6 +67,19 @@ PYBIND11_MODULE(bm25_search, m) {
         .def("load_model", &BM25::load_model, "Load a BM25 model", py::arg("filepath"))
         .def_readwrite("k", &BM25::k)
         .def_readwrite("b", &BM25::b);
+
+    py::class_<BM25_CSR, CSRBase>(m, "BM25_CSR")
+        .def(py::init<>())
+        .def("set_model", &BM25_CSR::set_model, "Set a CSR BM25 model", py::arg("corpus"), py::arg("k") = 1.5, py::arg("b") = 0.75)
+        .def_readwrite("k", &BM25_CSR::k)
+        .def_readwrite("b", &BM25_CSR::b);
+
+#define BIND_CSR(Name) py::class_<Name##_CSR, CSRBase>(m, #Name "_CSR").def(py::init<>()).def("set_model", &Name##_CSR::set_model, py::arg("corpus"), py::arg("k")=1.5, py::arg("b")=0.75, py::arg("delta")=1.0)
+    BIND_CSR(BM11);
+    BIND_CSR(BM15);
+    BIND_CSR(BM25L);
+    BIND_CSR(BM25Plus);
+    py::class_<TFIDF_CSR, CSRBase>(m, "TFIDF_CSR").def(py::init<>()).def("set_model", &TFIDF_CSR::set_model, py::arg("corpus"));
 
     py::class_<BM11, Base>(m, "BM11")
         .def(py::init<>())
@@ -119,4 +145,27 @@ PYBIND11_MODULE(bm25_search, m) {
         .def_readwrite("field_dl", &BM25F::field_dl)
         .def_readwrite("total_df", &BM25F::total_df)
         .def_readwrite("field_freq", &BM25F::field_freq);
+
+    py::class_<BM25T_CSR, BM25T>(m, "BM25T_CSR")
+        .def(py::init<>())
+        .def("set_model", &BM25T_CSR::set_model, py::arg("corpus"), py::arg("k") = 1.5,
+             py::arg("b") = 0.75, py::arg("eps") = 0.05, py::arg("max_iter") = 100)
+        .def("get_scores", &BM25T_CSR::get_scores, py::arg("queries"))
+        .def_property_readonly("csr_indptr", [](const BM25T_CSR& self) { return self.csr.indptr; })
+        .def_property_readonly("csr_indices", [](const BM25T_CSR& self) { return self.csr.indices; })
+        .def_property_readonly("csr_data", [](const BM25T_CSR& self) { return self.csr.data; })
+        .def_property_readonly("csr_vocabulary", [](const BM25T_CSR& self) { return self.csr.vocabulary; })
+        .def_property_readonly("csr_idf", [](const BM25T_CSR& self) { return self.csr.idf; });
+
+    py::class_<BM25F_CSR, BM25F>(m, "BM25F_CSR")
+        .def(py::init<>())
+        .def("set_model", &BM25F_CSR::set_model, py::arg("corpus"), py::arg("k") = 1.5,
+             py::arg("b") = vector<double>{0.75, 0.75},
+             py::arg("w") = vector<double>{3.0, 1.0})
+        .def("get_scores", &BM25F_CSR::get_scores, py::arg("queries"))
+        .def_property_readonly("csr_indptr", [](const BM25F_CSR& self) { return self.csr.indptr; })
+        .def_property_readonly("csr_indices", [](const BM25F_CSR& self) { return self.csr.indices; })
+        .def_property_readonly("csr_data", [](const BM25F_CSR& self) { return self.csr.data; })
+        .def_property_readonly("csr_vocabulary", [](const BM25F_CSR& self) { return self.csr.vocabulary; })
+        .def_property_readonly("csr_idf", [](const BM25F_CSR& self) { return self.csr.idf; });
 }

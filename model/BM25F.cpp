@@ -49,8 +49,9 @@ void BM25F::set_tf(size_t field_n, double k, vector<double> b, vector<double> w)
             // Calculate 'freq(q, field)', the frequency of a word in each document of the current field.
             vector<double> tf_vector(*doc_n, 0.0);
             for (size_t j = 0; j < *doc_n; j++) {
-                if (field_freq[i][j].find(word.first) != field_freq[i][j].end()) {
-                    tf_vector[j]++;
+                const auto term = field_freq[i][j].find(word.first);
+                if (term != field_freq[i][j].end()) {
+                    tf_vector[j] = static_cast<double>(term->second);
                 }
             }
 

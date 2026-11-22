@@ -29,7 +29,7 @@ public:
     unordered_map<string, vector<double>> tf;
     vector<unordered_map<string, size_t>> freq;
 
-    vector<vector<double>> get_scores(const vector<vector<string>>& queries);
+    virtual vector<vector<double>> get_scores(const vector<vector<string>>& queries);
     pair<vector<vector<double>>, vector<vector<size_t>>> get_topk(const vector<vector<string>>& queries, size_t n=5);
     vector<vector<string>> get_topk_docs(const vector<vector<string>>& queries, const vector<string>& docs, size_t n=5);
 

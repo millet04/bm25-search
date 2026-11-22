@@ -7,9 +7,10 @@
 
 #include <unordered_map>
 #include <unordered_set>
-#include <math.h>
+#include <cmath>
 #include <numeric>
 #include <algorithm>
+#include <limits>
 
 using namespace std;
 namespace py = pybind11;
@@ -45,8 +46,9 @@ void BM25T::set_tf(double k, double b, double eps, unsigned int max_iter) {
         // Calculate 'freq(q, doc)', a frequency of a word in each document.  
         vector<double> tf_vector(*doc_n, 0.0);
         for (size_t i = 0; i < *doc_n; i++) {
-            if (freq[i].find(word.first) != freq[i].end()) {
-                tf_vector[i]++;
+            const auto term = freq[i].find(word.first);
+            if (term != freq[i].end()) {
+                tf_vector[i] = static_cast<double>(term->second);
             }
         }
 
@@ -88,53 +90,63 @@ void BM25T::set_tf(double k, double b, double eps, unsigned int max_iter) {
  *
  **/
 double BM25T::compute_optimal_k(const string& word, double k, double sum_log_c, double eps, unsigned int max_iter) {
-
-    double alpha = 1.0;
-    double upper_bound = k;
-    
-    for (unsigned int i = 0; i < max_iter; i++) {
-
-        // Cacluate g(x) and g'(x)
-        double g_value = (k > 1) ? (k / (k - 1)) * log(k) : k;
-        double g_prime = (k > 1) ? (k - 1 - log(k)) / ((k - 1) * (k - 1)) : 0;
-
-        // Avoid zero devision.
-        if (fabs(g_prime) < eps) {
-            break;
-        }
-
-        // Calculate f(x) and f'(x).
-        double f_value = pow((g_value - (sum_log_c + 1) / df[word]), 2);
-        double f_prime = 2 * (g_value - (sum_log_c + 1) / df[word]) * g_prime;
-        
-        // Avoid zero devisoin.
-        if (f_prime < eps) {
-            break;
-        }
-
-        // Update k using Newton-Raphson method. k' = k - f(x)/f'(x)
-        double k_new = k - (f_value / f_prime);
-
-        if (fabs(k_new - k) < eps) {
-            k = k_new;
-            break;
-        }
-       
-        // Update only when the difference between k' and k is smaller than the upper bound.
-        // If the change in k is within an acceptable range, update k and record the new upper bound.
-        if (fabs(k_new - k) < upper_bound) {
-            k = k_new;
-            upper_bound = fabs(k_new - k);
-        }
-        // If the difference is greater than the upper bound, adjust the step size using alpha.
-        // This helps prevent large, unstable updates and moves towards a more stable direction.
-        else {
-            alpha *= 0.5;
-            k_new = k - alpha * (f_value / f_prime);
-            k = k_new;
-        }
+    const double initial_k = k;
+    const double tolerance = (std::isfinite(eps) && eps > 0.0) ? eps : 0.05;
+    const auto term_df = df.find(word);
+    if (term_df == df.end() || term_df->second <= 0.0 || !std::isfinite(sum_log_c) ||
+        !std::isfinite(initial_k) || initial_k <= 0.0 || max_iter == 0) {
+        return initial_k;
     }
-    return k;
+
+    const double target = (sum_log_c + 1.0) / term_df->second;
+    if (!std::isfinite(target) || target <= 0.0) {
+        return initial_k;
+    }
+
+    constexpr double min_k = 1e-12;
+    constexpr double max_k = 1e12;
+    k = std::min(std::max(initial_k, min_k), max_k);
+
+    for (unsigned int i = 0; i < max_iter; ++i) {
+        const double delta = k - 1.0;
+        const double g_value = (std::fabs(delta) < 1e-8)
+            ? 1.0 + delta / 2.0
+            : (k / delta) * std::log(k);
+        const double g_prime = (std::fabs(delta) < 1e-6)
+            ? 0.5
+            : (delta - std::log(k)) / (delta * delta);
+        const double residual = g_value - target;
+
+        if (!std::isfinite(g_value) || !std::isfinite(g_prime) || !std::isfinite(residual)) {
+            return initial_k;
+        }
+        if (std::fabs(residual) <= tolerance) {
+            return k;
+        }
+        if (std::fabs(g_prime) <= std::numeric_limits<double>::epsilon()) {
+            return initial_k;
+        }
+
+        double step = residual / g_prime;
+        if (!std::isfinite(step)) {
+            return initial_k;
+        }
+        double next_k = k - step;
+        double damping = 1.0;
+        while ((!std::isfinite(next_k) || next_k <= min_k || next_k > max_k) && damping > 1e-12) {
+            damping *= 0.5;
+            next_k = k - damping * step;
+        }
+        if (!std::isfinite(next_k) || next_k <= min_k || next_k > max_k) {
+            return initial_k;
+        }
+        if (std::fabs(next_k - k) <= tolerance * std::max(1.0, std::fabs(k))) {
+            return next_k;
+        }
+        k = next_k;
+    }
+
+    return initial_k;
 }
 
 /**
