@@ -1,2 +1,16 @@
 *.vcxproj.filters
 *.vcxproj.user
+
+# Python and C++ build artifacts
+.pytest_cache/
+__pycache__/
+*.py[cod]
+build/
+dist/
+*.egg-info/
+*.pyd
+*.so
+*.dll
+*.obj
+*.lib
+*.exp
