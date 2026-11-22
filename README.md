@@ -1,35 +1,30 @@
-# BM25-Search
-A collection of BM25 based algorithms, including BM25 itself, written in C++ and wrapped for Python.  
-The following algorithms are provided in `version 0.2.0`.
+<h1 align="center">BM25-Search</h1>
 
-- BM25
-- TF-IDF   
-- BM11   
-- BM15    
-- BM25L    
-- BM25+           
-- BM25T
-- BM25F   
+[한국어 README](README.ko.md)
 
-&nbsp;
+BM25-Search is a Python library that provides BM25-family ranking algorithms implemented in C++ and exposed through pybind11. It supports dense TF matrices for compatibility and CSR-backed variants for memory-efficient search.
 
-For detailed information on the algorithm and usage, refer to the following document:
-[https://millet04.github.io/bm25-search/](https://millet04.github.io/bm25-search/)
+## Features
 
+- BM25-family algorithms (BM25, BM11, BM15, BM25L, BM25+, BM25T, and BM25F) and TF-IDF retrieval
+- CSR variants for every algorithm (`*_CSR`)
+- Precomputed term frequency and inverse document frequency values
+- Score search, top-k ranking, and top-k document retrieval
+- Model and corpus persistence through pickle
 
+## Installation
 
-## 1. Installation
-```
+```bash
 pip install bm25-search
 ```
-- __OS__: Window, Linux (MacOs is not supported yet.)
-- __Python__: Python 3.6 to 3.13
 
- 
-## 2. Quick Start
+- Supported operating systems: Windows and Linux
+- Supported Python versions: 3.6–3.13
+- macOS is not currently supported
 
-### 1️⃣ Set Model 
-Calculate the TF (Term Frequency) and IDF (Inverse Document Frequency) for all tokens in the given documents using the `set_model()` method. This pre-calculation helps reduce latency during the search stage. 
+## Quick start
+
+Documents and queries must be tokenized as lists of tokens.
 
 ```python
 from bm25_search import BM25
@@ -37,141 +32,88 @@ from bm25_search import BM25
 corpus = [
     "The sun is shining brightly",
     "It is raining now",
-    "The breeze feels cool",
     "Snow is expected tonight",
-    "The sky is cloudy"    
 ]
+corpus_tokens = [document.lower().split() for document in corpus]
 
-# Tokenized 2-dimensional list 
-corpus_tokenized = [doc.lower().split(" ") for doc in corpus]
+model = BM25()
+model.set_model(corpus_tokens, k=1.5, b=0.75)
 
-bm25 = BM25()
-
-# TF and IDF calculations are done at this stage, 
-# so this might take a while if the corpus is large. 
-bm25.set_model(corpus_tokenized, k=1.5, b=0.75)
+queries = [["snow"], ["sun", "shining"]]
+scores = model.get_scores(queries)
+top_scores, top_indices = model.get_topk(queries, n=2)
+top_documents = model.get_topk_docs(queries, corpus, n=2)
 ```
 
-### 2️⃣ Get Scores
-You can obtain the scores of all documents for the given queries using the `get_scores()` method.
+`set_model()` performs preprocessing. Reuse the same model for multiple queries to avoid recalculating TF and IDF values.
+
+## CSR search
+
+CSR classes expose the same search methods as their dense counterparts while storing the calculated TF matrix in compressed sparse row form.
 
 ```python
-# Tokenized 2-dimensional list
-queries = ["white snow", "cloudy sky"]
-queries_tokenized = [query.lower().split(" ") for query in queries]
+from bm25_search import BM25_CSR
 
-bm25.get_scores(queries_tokenized)
-```
-```
-[[0.0, 0.0, 0.0, 1.4166511719473336, 0.0],
- [0.0, 0.0, 0.0, 0.0, 2.833302343894667]]
+model = BM25_CSR()
+model.set_model(corpus_tokens, k=1.5, b=0.75)
+scores = model.get_scores([["snow"]])
 ```
 
-### 3️⃣ Get Top-K Scores & Indices
-You can obtain the scores and indices of top-k documents for the given queries using the `get_topk()` method.
-```python
-bm25.get_topk(queries_tokenized, n=2)
-```
+Available CSR classes are `BM25_CSR`, `TFIDF_CSR`, `BM11_CSR`, `BM15_CSR`, `BM25L_CSR`, `BM25Plus_CSR`, `BM25T_CSR`, and `BM25F_CSR`.
 
-```
-([[1.4166511719473336, 0.0], [2.833302343894667, 0.0]], [[3, 0], [4, 0]])
-```
+## Algorithms
 
-### 4️⃣ Get Top-K Docs
-You can obtain the top-k documents for the given queries using the `get_topk_docs()` method.
-```python
-bm25.get_topk_docs(queries_tokenized, corpus, n=2)
-```
-```
-[['Snow is expected tonight', 'The sun is shining brightly'],
- ['The sky is cloudy', 'The sun is shining brightly']]
-```
+All dense classes use `set_model()` followed by `get_scores()`, `get_topk()`, or `get_topk_docs()`.
 
-### 5️⃣ Save & Load
-You can save the model to a pickle file using the `save_model()` method. All statistics required to build the model are saved.
-```python
-bm25.save_model("mybm25.pkl")
-```
-You can load the saved model using the `load_model()` method.
-```python
-bm25_new = BM25()
-bm25_new.load_model("mybm25.pkl")
-```
-Additionally, the corpus can be saved and loaded using the `save_corpus()` and `load_corpus()` methods.
-```python
-bm25.save_corpus("corpus.pkl", corpus)
-corpus_new = bm25.load_corpus("corpus.pkl")
-```
+| Algorithm | Class | Main parameters |
+| --- | --- | --- |
+| BM25 | `BM25` | `k=1.5`, `b=0.75` |
+| TF-IDF | `TFIDF` | — |
+| BM11 | `BM11` | `k=1.5` |
+| BM15 | `BM15` | `k=1.5` |
+| BM25L | `BM25L` | `k=1.5`, `b=0.75`, `delta=1.0` |
+| BM25+ | `BM25Plus` | `k=1.5`, `b=0.75`, `delta=1.0` |
+| BM25T | `BM25T` | `k=1.5`, `b=0.75`, `eps=0.05`, `max_iter=100` |
+| BM25F | `BM25F` | `k=1.5`, field `b`, field `w` |
 
-## 3. Other Algorhithms
-The following algorithms are provided, with the same usage, but different parameters for `set_model()` method. You can use them by creating an instance like `bm25plus = BM25Plus()` and following the guidance below regarding the parameters of the `set_model()` method.
+For algorithm definitions and formulas, see the [full documentation](docs/index.md).
 
-- BM25 `BM25` ➡️ ```bm25.set_model(corpus, k=1.5, b=0.75)```  
-- TF-IDF `TFIDF` ➡️ ```tf_idf.set_model(corpus)```  
-- BM11 `BM11` ➡️ ```bm11.set_model(corpus, k=1.5)```         
-- BM15 `BM15` ➡️ ```bm15.set_model(corpus, k=1.5)```         
-- BM25L `BM25L` ➡️ ```bm25l.set_model(corpus, k=1.5, b=0.75, delta = 1.0)```           
-- BM25+ `BM25Plus` ➡️ ```bm25plus.set_model(corpus, k=1.5, b=0.75, delta = 1.0)```       
-- BM25T `BM25T` ➡️ ```bm25t.set_model(corpus, k=1.5, b=0.75, eps=0.05, max_iter=100)```
+### BM25F input
 
-
-## 4. BM25F
-The BM25F algorithm computes scores for each field and combines them using weights to produce the final score.
-Since the scoring is field-based, a document must have multiple fields.
+BM25F expects a three-dimensional, field-major tokenized corpus. The outer list contains fields; each field contains one tokenized list per document.
 
 ```python
-# Each document must have multiple fields, such as 'title' and 'text'.
+from bm25_search import BM25F
+
 corpus = [
-    {'title': "Morning Routine",
-     'text': "I wake up early and drink a cup of coffee"},
-    {'title': "A Rainy Day",
-     'text': "She gets lost in the pages of her favorite novel"},
-    {'title':" Lost in a Book",
-     'text': "She gets lost in the pages of her favorite novel"},
-    {'title':"A Walk in the Park",
-     'text':"Birds chirp as I stroll through the quiet park"},
-    {'title':"Weekend Plans",
-     'text':"We will go to the beach this Saturday"}
+    [["morning", "routine"], ["rainy", "day"]],  # title field
+    [["coffee", "early"], ["favorite", "novel"]],  # body field
 ]
 
-# The text in each document's fields should be grouped by field.
-corpus_tokenized = [[] for _ in range(2)]
-
-for doc in corpus:
-    corpus_tokenized[0].append(doc['title'].lower().split())
-    corpus_tokenized[1].append(doc['text'].lower().split())
-
-bm25f = BM25F()
-
-# TF and IDF calculations are done at this stage, 
-# so this might take a while if the corpus is large.
-bm25f.set_model(corpus_tokenized, k=1.5, b=[0.75, 0.75], w=[3.0, 1.0])
-```
-The parameters(*corpus*) of method `get_topk_docs()` of `BM25F` should be of dictionary type. Therefore, it's better to process documents as dictionaries, as shown in the example above.   
-
-```
-bm25f.get_topk_docs(queries_tokenized, corpus, n=2)
+model = BM25F()
+model.set_model(corpus, k=1.5, b=[0.75, 0.75], w=[3.0, 1.0])
 ```
 
-&nbsp;
+## Save and load
 
-## Citing
-This code is referenced from the repository [dorianbrown/rank_bm25](https://github.com/dorianbrown/rank_bm25).
-```
-@misc{dorianbrown2022rank_bm25,
-      title={Rank-BM25: A two line search engine},
-      author={Dorian Brown},
-      year={2022},
-      url={https://github.com/dorianbrown/rank_bm25},
-}
+```python
+model.save_model("bm25.pkl")
+
+restored = BM25()
+restored.load_model("bm25.pkl")
 ```
 
-If you use this **BM25-Search** in your research or projects, please cite it as follows:
-```
+Corpora can also be saved and loaded with `save_corpus()` and `load_corpus()`.
+
+## License and attribution
+
+This project is released under the license in [LICENSE](LICENSE). Some implementation ideas are based on [rank_bm25](https://github.com/dorianbrown/rank_bm25) and the paper *Improvements to BM25 and Language Models Examined*.
+
+```bibtex
 @misc{millet042025bm25-search,
-      title={BM25-Search},
-      author={Kim Minseok},
-      year={2025},
-      url={https://github.com/millet04/bm25_search},
+  title={BM25-Search},
+  author={Kim Minseok},
+  year={2025},
+  url={https://github.com/millet04/bm25_search}
 }
 ```
