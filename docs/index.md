@@ -10,7 +10,7 @@ description: Python BM25 Tool
 
           
 [Overview](#Overview)      
-[Installation](#installation-version-020)       
+[Installation](#installation-version-100)
 [Quick Start](#quick-start)                         
 [Algorithms](#algorithms)    
 [Citing](#citing)         
@@ -18,7 +18,7 @@ description: Python BM25 Tool
 
 ---------------
 # Overview
-A collection of BM25-based algorithms, including BM25 itself, written in C++ and wrapped for Python. The following algorithms are provided in `version 0.2.0`.
+A collection of BM25-based algorithms, including BM25 itself, written in C++ and wrapped for Python. The following algorithms are provided in `version 1.0.0`.
 
 - [BM25](#1-bm25-class-bm25)      
 - [TF-IDF](#2-tf-idf-class-tfidf)      
@@ -29,16 +29,18 @@ A collection of BM25-based algorithms, including BM25 itself, written in C++ and
 - [BM25T](#7-bm25t-class-bm25t)
 - [BM25F](#8-bm25f-class-bm25f)
 
+Each algorithm also has a CSR variant with the `_CSR` suffix for compressed sparse row storage.
+
 &nbsp;
 
 ------------
 
-# Installation (version 0.2.0)
+# Installation (version 1.0.0)
 
 ```
 pip install bm25-search
 ```
-- **OS**: Window, Linux (MacOs is not supported yet.)
+- **OS**: Windows and Linux (macOS is not supported yet.)
 - **Python**: Python 3.6 to 3.13
 
 &nbsp;
@@ -54,69 +56,55 @@ from bm25_search import BM25
 corpus = [
     "The sun is shining brightly",
     "It is raining now",
-    "The breeze feels cool",
     "Snow is expected tonight",
-    "The sky is cloudy"    
 ]
 
 # Tokenized 2-dimensional list 
-corpus_tokenized = [doc.lower().split(" ") for doc in corpus]
+corpus_tokens = [document.lower().split() for document in corpus]
 
-bm25 = BM25()
+model = BM25()
 
 # TF and IDF calculations are done at this stage, 
 # so this might take a while if the corpus is large. 
-bm25.set_model(corpus_tokenized, k=1.5, b=0.75)
+model.set_model(corpus_tokens, k=1.5, b=0.75)
 ```
 
 ### 2️⃣ Get Scores
 You can obtain the scores of all documents for the given queries using the `get_scores()` method.
 ```python
 # Tokenized 2-dimensional list
-queries = ["white snow", "cloudy sky"]
-queries_tokenized = [query.lower().split(" ") for query in queries]
+queries = [["snow"], ["sun", "shining"]]
 
-bm25.get_scores(queries_tokenized)
-```
-```
-[[0.0, 0.0, 0.0, 1.4166511719473336, 0.0],
- [0.0, 0.0, 0.0, 0.0, 2.833302343894667]]
+model.get_scores(queries)
 ```
 
 ### 3️⃣ Get Top-K Scores & Indices
 You can obtain the scores and indices of top-k documents for the given queries using the `get_topk()` method.
 ```python
-bm25.get_topk(queries_tokenized, n=2)
-```
-```
-([[1.4166511719473336, 0.0], [2.833302343894667, 0.0]], [[3, 0], [4, 0]])
+model.get_topk(queries, n=2)
 ```
 
 ### 4️⃣ Get Top-K Docs
 You can obtain the top-k documents for the given queries using the `get_topk_docs()` method.
 
 ```python
-bm25.get_topk_docs(queries_tokenized, corpus, n=2)
-```
-```
-[['Snow is expected tonight', 'The sun is shining brightly'],
- ['The sky is cloudy', 'The sun is shining brightly']]
+model.get_topk_docs(queries, corpus, n=2)
 ```
 
 ### 5️⃣ Save & Load
 You can save the model to a pickle file using the `save_model()` method. All statistics required to build the model are saved.
 ```python
-bm25.save_model("mybm25.pkl")
+model.save_model("bm25.pkl")
 ```
 You can load the saved model using the `load_model()` method.
 ```python
-bm25_new = BM25()
-bm25_new.load_model("mybm25.pkl")
+restored = BM25()
+restored.load_model("bm25.pkl")
 ```
 Additionally, the corpus can be saved and loaded using the `save_corpus()` and `load_corpus()` methods.
 ```python
-bm25.save_corpus("corpus.pkl", corpus)
-corpus_new = bm25.load_corpus("corpus.pkl")
+model.save_corpus("corpus.pkl", corpus)
+corpus_new = model.load_corpus("corpus.pkl")
 ```
 
 ### 6️⃣ BM25F
@@ -409,7 +397,7 @@ bm25l.set_model(corpus, k, b, delta)
 - **corpus** (2-dimensional list): A set of documents to be retrieved. Each document in the inner lists must be tokenized.
 - **k** (float): *k1*. It controls the influence of Term Frequency (TF) on the final score, determining how quickly the score saturates as term frequency increases.(default = 1.5)
 - **b** (float): *b*. It adjusts the impact of document length normalization (default = 0.75)
-- **delta** (float): *δ*. It alleviates the over-penalization of long documents. It must to be greater than 0(default = 1.0) 
+- **delta** (float): *δ*. It alleviates the over-penalization of long documents. It must be greater than 0 (default = 1.0)
 
 &nbsp;
 
@@ -421,14 +409,14 @@ bm25l.set_model(corpus, k, b, delta)
 The BM25+ score for a document *D* with respect to a query *Q* is given by:
 
 
-$$\text{score}(D, Q) = \sum_{t \in Q} IDF(t) \cdot (\frac{ f(t, D) \cdot (k_1 + 1)}{ f(t, D) + k_1 \cdot (1 - b + b \cdot \frac{|D|}{\text{avgD}}) } + \delta)$$
+$$\text{score}(D, Q) = \sum_{t \in Q} IDF(t) \cdot \left(\frac{f(t, D) \cdot (k_1 + 1)}{f(t, D) + k_1 \cdot \left(1 - b + b \cdot \frac{|D|}{\mathrm{avgD}}\right)} + \delta\right)$$
 
 
 ### Term Frequency (TF)   
 
 BM25+ introduces a positive constant *δ* as a lower bound so that Term Frequency of BM25+ is always greater than 0.  
 
-$$TF(D, t) = \frac{ f(t, D) \cdot (k_1 + 1)}{ f(t, D) + k_1 \cdot (1 - b + b \cdot \frac{|D|}{\text{avgD}}) } + \delta$$ 
+$$TF(D, t) = \frac{f(t, D) \cdot (k_1 + 1)}{f(t, D) + k_1 \cdot \left(1 - b + b \cdot \frac{|D|}{\mathrm{avgD}}\right)} + \delta$$
 
 where,
 
@@ -453,7 +441,7 @@ bm25plus.set_model(corpus, k, b, delta)
 - **corpus** (2-dimensional list): A set of documents to be retrieved. Each document in the inner lists must be tokenized.
 - **k** (float): *k1*. It controls the influence of Term Frequency (TF) on the final score, determining how quickly the score saturates as term frequency increases.(default = 1.5)
 - **b** (float): *b*. It adjusts the impact of document length normalization (default = 0.75)
-- **delta** (float): *δ*. It alleviates the over-penalization of long documents. It must to be greater than 0(default = 1.0) 
+- **delta** (float): *δ*. It alleviates the over-penalization of long documents. It must be greater than 0 (default = 1.0)
 
 &nbsp;
 
@@ -657,3 +645,10 @@ If you use this **BM25-Search** library in your research or projects, please cit
 `version 0.2.0` *(2025.2.24)*
 - Add the BM25F algorithm to the library.
 - Update README and the document.
+
+`version 1.0.0` *(2026.11.22)*
+- Add CSR implementations for BM25, TF-IDF, BM11, BM15, BM25L, BM25+, BM25T, and BM25F.
+- Add shared CSR storage and scoring support while preserving the existing dense APIs.
+- Correct term-frequency handling for repeated terms across all algorithms.
+- Improve BM25T's Newton-Raphson optimization with convergence and numerical-stability safeguards, and set the default `eps` to `0.05`.
+- Update the README and organize the development documentation.
