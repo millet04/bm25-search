@@ -1,5 +1,8 @@
 from setuptools import setup, Extension
 import pybind11
+from pathlib import Path
+
+long_description = Path('README.md').read_text(encoding='utf-8')
 
 sfc_module = Extension(
     'bm25_search',
@@ -27,8 +30,11 @@ sfc_module = Extension(
 
 setup(
     name='bm25_search',
-    version='0.2.0',
+    version='1.0.0',
     description='Python Package with BM25 Algorithms C++ extension using Pybind11',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
+    python_requires='>=3.6',
     ext_modules=[sfc_module],
     zip_safe=False,
 )
